@@ -1,0 +1,436 @@
+<export-ma>
+  <!--WARNING>
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! The contents of this file should not be edited.
+!! Any such modifications to this file may result in errors during import.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+</WARNING-->
+  <ma-data format="Packaged">
+    <format-version>1</format-version>
+    <internal-version>1</internal-version>
+    <ma-companyname>Soren Granfeldt</ma-companyname>
+    <subtype>PowerShell</subtype>
+    <ma-listname>PowerShell</ma-listname>
+    <id>{FEF18432-C536-4F53-9E17-13EF07921E2E}</id>
+    <category>Extensible2</category>
+    <password-sync-allowed>1</password-sync-allowed>
+    <schema>
+      <dsml:dsml xmlns:ms-dsml="http://www.microsoft.com/MMS/DSML" xmlns:dsml="http://www.dsml.org/DSML">
+        <dsml:directory-schema ms-dsml:no-objectclass-validation="true">
+          <dsml:class id="person" type="structural" ms-dsml:locked="1">
+            <dsml:name>person</dsml:name>
+            <dsml:attribute ref="#objectguidstring" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#objectsidstring" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#samaccountname" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#distinguishedname" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#homedrive" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#homedirectory" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#id" required="true" ms-dsml:isAnchor="true" />
+            <dsml:attribute ref="#export_password" required="false" />
+          </dsml:class>
+          <dsml:attribute-type id="objectguidstring" single-value="true">
+            <dsml:name>objectguidstring</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="objectsidstring" single-value="true">
+            <dsml:name>objectsidstring</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="samaccountname" single-value="true">
+            <dsml:name>samaccountname</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="distinguishedname" single-value="true">
+            <dsml:name>distinguishedname</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="homedrive" single-value="true">
+            <dsml:name>homedrive</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="homedirectory" single-value="true">
+            <dsml:name>homedirectory</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="id" single-value="true" ms-dsml:immutable="true">
+            <dsml:name>id</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.5</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="export_password" single-value="true" ms-dsml:encrypted="true" ms-dsml:export-only="true">
+            <dsml:name>export_password</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+        </dsml:directory-schema>
+      </dsml:dsml>
+    </schema>
+    <attribute-inclusion>
+    </attribute-inclusion>
+    <stay-disconnector />
+    <join>
+    </join>
+    <projection />
+    <export-attribute-flow>
+    </export-attribute-flow>
+    <extension />
+    <controller-configuration>
+      <application-architecture>process</application-architecture>
+    </controller-configuration>
+    <ma-ui-settings>
+      <account-joiner-queries>
+        <attributes>
+        </attributes>
+        <filters max_mv_search_results="">
+        </filters>
+      </account-joiner-queries>
+    </ma-ui-settings>
+    <private-configuration>
+      <MAConfig>
+        <ui-data>
+          <xmlwizard>
+            <properties>
+              <sample_file>
+              </sample_file>
+              <code_page_description>
+              </code_page_description>
+            </properties>
+            <partitions>
+            </partitions>
+            <primary_class_mappings>
+            </primary_class_mappings>
+            <object_classes>
+            </object_classes>
+            <attributes>
+            </attributes>
+            <anchor>
+              <attribute object_class="person">id</attribute>
+            </anchor>
+          </xmlwizard>
+          <ma-help-text>With this management agent, you can run Powershell scripts for import, export and password management.</ma-help-text>
+          <ma-help-text>With this management agent, you can run PowerShell scripts for import, export and password management.</ma-help-text>
+        </ui-data>
+        <importing>
+        </importing>
+        <exporting>
+        </exporting>
+        <ldap-dn>0</ldap-dn>
+        <change_type_attribute>
+        </change_type_attribute>
+        <add_change_type_value>Add</add_change_type_value>
+        <modify_change_type_value>Modify</modify_change_type_value>
+        <delete_change_type_value>Delete</delete_change_type_value>
+        <primary_class_mappings>
+        </primary_class_mappings>
+        <enable-unapplied-merge>0</enable-unapplied-merge>
+        <password-extension-config>
+          <password-extension-enabled>1</password-extension-enabled>
+          <dll data-owner="ISV">Granfeldt.PowerShell.ManagementAgent.dll</dll>
+          <password-set-enabled>1</password-set-enabled>
+          <password-change-enabled>1</password-change-enabled>
+          <connection-info>
+            <connect-to>
+            </connect-to>
+            <user>
+            </user>
+          </connection-info>
+          <timeout>0</timeout>
+        </password-extension-config>
+        <file-type>Extensible2</file-type>
+        <extension-config>
+          <filename data-owner="ISV">Granfeldt.PowerShell.ManagementAgent.dll</filename>
+          <import-default-page-size>100</import-default-page-size>
+          <import-max-page-size>10000</import-max-page-size>
+          <export-default-page-size>100</export-default-page-size>
+          <export-max-page-size>500</export-max-page-size>
+          <export-mode data-owner="ISV">call-based</export-mode>
+          <import-mode>call-based</import-mode>
+          <export-enabled data-owner="ISV">1</export-enabled>
+          <import-enabled data-owner="ISV">1</import-enabled>
+          <capability-bits>34052144</capability-bits>
+          <export-type>3</export-type>
+          <discovery-partition>
+          </discovery-partition>
+          <discovery-schema>extensibility</discovery-schema>
+          <discovery-hierarchy>
+          </discovery-hierarchy>
+          <password-management-enabled>1</password-management-enabled>
+          <assembly-version>5.5.0.0</assembly-version>
+        </extension-config>
+        <parameter-definitions refreshSchema="0" refreshPartition="0" refreshConnectivityParameters="0" refreshGlobalParameters="0" refreshOtherParameters="0">
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>The Schema script is called to retrieve the object and attribute definitions. This script should be accessible to the FIM Synchronization Service service account during configuration and refreshes of the schema.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Schema Script</name>
+            <use>connectivity</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>c:\psma\schema.ps1</default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>Authentication (optional): These credentials are passed as parameters to all scripts.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Username</name>
+            <use>connectivity</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Password</name>
+            <use>connectivity</use>
+            <type>encrypted-string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified,  the scripts are run in the security context of the FIM Synchronization Service service account.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Domain (impersonate)</name>
+            <use>connectivity</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Username (impersonate)</name>
+            <use>connectivity</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Password  (impersonate)</name>
+            <use>connectivity</use>
+            <type>encrypted-string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>Scripts</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>These are the PowerShell scripts that are run on the different operations. You should specify the full path of the scripts. Path cannot include spaces or similar whitespaces.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Import Script</name>
+            <use>global</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>c:\psma\import.ps1</default-value>
+          </parameter>
+          <parameter>
+            <name>Export Script</name>
+            <use>global</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>c:\psma\export.ps1</default-value>
+          </parameter>
+          <parameter>
+            <name>Use paged import</name>
+            <use>global</use>
+            <type>checkbox</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>0</default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>If you enable Password Management, this script is called for both password change and set (requires PCNS).</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Password Management Script</name>
+            <use>global</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>c:\psma\password.ps1</default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>The objects piped to the export script will normally be of type PSCustomObject. If you uncheck this, you will get objects of more complex type CSEntryChange instead (legacy behaviour). For more information on the CSEntryChange object type, please see MSDN Library.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Export simple objects</name>
+            <use>global</use>
+            <type>checkbox</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>1</default-value>
+          </parameter>
+        </parameter-definitions>
+        <parameter-values>
+        </parameter-values>
+        <case_normalize_dn_for_anchor>1</case_normalize_dn_for_anchor>
+        <default_visible_attributes>
+          <attribute>id</attribute>
+          <attribute>objectguidstring</attribute>
+          <attribute>objectsidstring</attribute>
+          <attribute>samaccountname</attribute>
+          <attribute>distinguishedname</attribute>
+          <attribute>homedrive</attribute>
+          <attribute>homedirectory</attribute>
+        </default_visible_attributes>
+      </MAConfig>
+    </private-configuration>
+    <SyncConfig-refresh-schema>0</SyncConfig-refresh-schema>
+    <ma-partition-data>
+    </ma-partition-data>
+    <ma-run-data>
+    </ma-run-data>
+    <capabilities-mask>207b831</capabilities-mask>
+    <export-type>3</export-type>
+    <dn-construction />
+    <password-sync>
+      <maximum-retry-count>10</maximum-retry-count>
+      <retry-interval>60</retry-interval>
+      <allow-low-security>0</allow-low-security>
+      <unlock-account>0</unlock-account>
+    </password-sync>
+    <component_mappings />
+  </ma-data>
+  <mv-data>
+    <import-attribute-flow>
+    </import-attribute-flow>
+  </mv-data>
+</export-ma>

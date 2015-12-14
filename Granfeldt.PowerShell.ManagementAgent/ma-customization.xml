@@ -1,0 +1,7 @@
+<ma-customization-info>
+    <ma-internal-version>1</ma-internal-version>
+    <ma-companyname>Soren Granfeldt</ma-companyname>
+    <ma-subtype>PowerShell</ma-subtype>
+    <ma-listname>PowerShell</ma-listname>
+    <ma-help-text>With this management agent, you can run PowerShell scripts for import, export and password management.</ma-help-text>
+</ma-customization-info>

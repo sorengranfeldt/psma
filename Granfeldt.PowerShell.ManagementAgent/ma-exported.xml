@@ -1,0 +1,140 @@
+<export-ma server='FIM01' export-date='2014-02-12 13:33:59.827'>
+<!--WARNING>
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! The contents of this file should not be edited.
+!! Any such modifications to this file may result in errors during import.
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+</WARNING-->
+<ma-data>
+ <format-version>1</format-version>
+ <id>{FEF18432-C536-4F53-9E17-13EF07921E2E}</id>
+ <name>HomeDirectory</name>
+ <category>Extensible2</category>
+ <subtype>PowerShell</subtype>
+ <ma-listname>PowerShell</ma-listname>
+ <ma-companyname>Soren Granfeldt</ma-companyname>
+ <creation-time>2013-07-04 09:28:13.310</creation-time>
+ <last-modification-time>2014-02-12 13:21:44.351</last-modification-time>
+ <version>32</version>
+ <internal-version>1</internal-version>
+ <password-sync-allowed>1</password-sync-allowed>
+ <schema>
+  <dsml:dsml xmlns:ms-dsml="http://www.microsoft.com/MMS/DSML" xmlns:dsml="http://www.dsml.org/DSML"><dsml:directory-schema ms-dsml:no-objectclass-validation="true"><dsml:class id="person" type="structural" ms-dsml:locked="1"><dsml:name>person</dsml:name><dsml:attribute ref="#objectguidstring" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#objectsidstring" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#samaccountname" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#distinguishedname" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#homedrive" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#homedirectory" required="false" ms-dsml:isAnchor="false" /><dsml:attribute ref="#id" required="true" ms-dsml:isAnchor="true" /><dsml:attribute ref="#export_password" required="false" /></dsml:class><dsml:attribute-type id="objectguidstring" single-value="true"><dsml:name>objectguidstring</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="objectsidstring" single-value="true"><dsml:name>objectsidstring</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="samaccountname" single-value="true"><dsml:name>samaccountname</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="distinguishedname" single-value="true"><dsml:name>distinguishedname</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="homedrive" single-value="true"><dsml:name>homedrive</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="homedirectory" single-value="true"><dsml:name>homedirectory</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="id" single-value="true" ms-dsml:immutable="true"><dsml:name>id</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.5</dsml:syntax></dsml:attribute-type><dsml:attribute-type id="export_password" single-value="true" ms-dsml:encrypted="true" ms-dsml:export-only="true"><dsml:name>export_password</dsml:name><dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax></dsml:attribute-type></dsml:directory-schema></dsml:dsml>
+ </schema>
+ <attribute-inclusion><attribute>distinguishedname</attribute><attribute>homedirectory</attribute><attribute>homedrive</attribute><attribute>id</attribute><attribute>objectguidstring</attribute><attribute>objectsidstring</attribute><attribute>samaccountname</attribute><attribute>export_password</attribute></attribute-inclusion>
+ <stay-disconnector />
+ <join><join-profile cd-object-type="person"><join-criterion id="{48E2C9D5-FA2B-483B-939A-1EFAF22E25B3}"><search mv-object-type="person"><attribute-mapping mv-attribute="accountName"><direct-mapping><src-attribute>samaccountname</src-attribute></direct-mapping></attribute-mapping></search><resolution type="none"><script-context></script-context></resolution></join-criterion></join-profile></join>
+ <projection />
+ <export-attribute-flow><export-flow-set cd-object-type="person" mv-object-type="person"><export-flow cd-attribute="homedirectory" id="{523E67B7-3896-4E4F-8D73-E2B098977967}" suppress-deletions="false"><direct-mapping><src-attribute>homeDirectory</src-attribute></direct-mapping></export-flow><export-flow cd-attribute="homedrive" id="{FEADD738-0637-4BE1-B8D3-BC57BF52E082}" suppress-deletions="false"><direct-mapping><src-attribute>homeDrive</src-attribute></direct-mapping></export-flow><export-flow cd-attribute="samaccountname" id="{DC07FE5C-6248-459A-A562-9C3EF1D75864}" suppress-deletions="true"><direct-mapping><src-attribute>accountName</src-attribute></direct-mapping></export-flow></export-flow-set></export-attribute-flow>
+ <provisioning-cleanup type="declared"><action>make-normal-disconnector</action></provisioning-cleanup>
+ <extension />
+ <controller-configuration>
+ <application-protection>low</application-protection>
+ <application-architecture>process</application-architecture>
+</controller-configuration>
+
+ <description></description>
+ <ma-ui-settings><account-joiner-queries><attributes></attributes><filters max_mv_search_results=""></filters></account-joiner-queries></ma-ui-settings>
+ <private-configuration>
+  <MAConfig><ui-data><xmlwizard><properties><sample_file></sample_file><code_page_description></code_page_description></properties><partitions><partition cd_name="default" guid="{C00D730B-BEB0-4D10-9EC5-E90EF61504E5}" version="0"><object_class>person</object_class></partition></partitions><primary_class_mappings><mapping object_class="person" primary_class="person" user_define="0"><attribute>accountname</attribute><attribute>distinguishedname</attribute><attribute>homedrive</attribute><attribute>homedirectory</attribute><attribute>id</attribute><attribute>export_password</attribute></mapping></primary_class_mappings><object_classes><object_class cd_name="person" selected="-1" user_define="0" configured="-1" anchor="" dn_as_anchor="0"><attribute mandatory="0">accountname</attribute><attribute mandatory="0">distinguishedname</attribute><attribute mandatory="0">homedrive</attribute><attribute mandatory="0">homedirectory</attribute><attribute mandatory="-1">id</attribute><attribute mandatory="0">export_password</attribute></object_class></object_classes><attributes><attribute cd_name="accountname" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="String" user_define="0" /><attribute cd_name="distinguishedname" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="String" user_define="0" /><attribute cd_name="homedirectory" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="String" user_define="0" /><attribute cd_name="homedrive" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="String" user_define="0" /><attribute cd_name="id" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="Binary" user_define="0" /><attribute cd_name="export_password" sample_data="" binary="0" multi_valued="0" file_reference="0" selected="-1" lower_bound="" upper_bound="" type="String" user_define="0" /></attributes><anchor><attribute object_class="person">id</attribute></anchor></xmlwizard><ma-help-text>With this management agent, you can run Powershell scripts for import, export and password management.</ma-help-text></ui-data><importing><anchor><attribute object_class="person">id</attribute></anchor><per-class-settings><class><name>person</name><anchor><attribute>id</attribute></anchor></class></per-class-settings></importing><exporting></exporting><ldap-dn>0</ldap-dn><change_type_attribute></change_type_attribute><add_change_type_value>Add</add_change_type_value><modify_change_type_value>Modify</modify_change_type_value><delete_change_type_value>Delete</delete_change_type_value><primary_class_mappings><mapping><primary_class>person</primary_class><oc-value>person</oc-value></mapping></primary_class_mappings><enable-unapplied-merge>0</enable-unapplied-merge><password-extension-config><password-extension-enabled>1</password-extension-enabled><dll data-owner="ISV">Granfeldt.PowerShell.ManagementAgent.dll</dll><password-set-enabled>1</password-set-enabled><password-change-enabled>1</password-change-enabled><connection-info><connect-to></connect-to><user></user></connection-info><timeout>0</timeout></password-extension-config><file-type>Extensible2</file-type><extension-config><filename data-owner="ISV">Granfeldt.PowerShell.ManagementAgent.dll</filename><import-default-page-size>100</import-default-page-size><import-max-page-size>10000</import-max-page-size><export-default-page-size>100</export-default-page-size><export-max-page-size>500</export-max-page-size><export-mode data-owner="ISV">call-based</export-mode><import-mode>call-based</import-mode><export-enabled data-owner="ISV">1</export-enabled><import-enabled data-owner="ISV">1</import-enabled><capability-bits>34052144</capability-bits><export-type>3</export-type><discovery-partition></discovery-partition><discovery-schema>extensibility</discovery-schema><discovery-hierarchy></discovery-hierarchy><password-management-enabled>1</password-management-enabled><assembly-version>5.5.0.0</assembly-version></extension-config><parameter-definitions refreshSchema="0" refreshPartition="0" refreshConnectivityParameters="0" refreshGlobalParameters="0" refreshOtherParameters="0"><parameter><name></name><use>connectivity</use><type>label</type><validation></validation><text>The Schema script is called to retrieve the object and attribute definitions. This script should be accessible to the FIM Synchronization Service service account during configuration and refreshes of the schema.</text><default-value></default-value></parameter><parameter><name>Schema Script</name><use>connectivity</use><type>string</type><validation></validation><text></text><default-value>c:\temp\schema.ps1</default-value></parameter><parameter><name></name><use>connectivity</use><type>divider</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>connectivity</use><type>label</type><validation></validation><text>Authentication (optional): These credentials are passed as parameters to all scripts.</text><default-value></default-value></parameter><parameter><name>Username</name><use>connectivity</use><type>string</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name>Password</name><use>connectivity</use><type>encrypted-string</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>connectivity</use><type>divider</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>connectivity</use><type>label</type><validation></validation><text>Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified,  the scripts are run in the security context of the FIM Synchronization Service service account.</text><default-value></default-value></parameter><parameter><name>Domain (impersonate)</name><use>connectivity</use><type>string</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name>Username (impersonate)</name><use>connectivity</use><type>string</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name>Password  (impersonate)</name><use>connectivity</use><type>encrypted-string</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>global</use><type>label</type><validation></validation><text>Scripts</text><default-value></default-value></parameter><parameter><name></name><use>global</use><type>label</type><validation></validation><text>These are the PowerShell scripts that are run on the different operations. You should specify the full path of the scripts. Path cannot include spaces or similar whitespaces.</text><default-value></default-value></parameter><parameter><name>Import Script</name><use>global</use><type>string</type><validation></validation><text></text><default-value>c:\temp\import.ps1</default-value></parameter><parameter><name>Export Script</name><use>global</use><type>string</type><validation></validation><text></text><default-value>c:\temp\export.ps1</default-value></parameter><parameter><name>Use paged import</name><use>global</use><type>checkbox</type><validation></validation><text></text><default-value>0</default-value></parameter><parameter><name></name><use>global</use><type>divider</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>global</use><type>label</type><validation></validation><text>If you enable Password Management, this script is called for both password change and set (requires PCNS).</text><default-value></default-value></parameter><parameter><name>Password Management Script</name><use>global</use><type>string</type><validation></validation><text></text><default-value>c:\temp\password.ps1</default-value></parameter><parameter><name></name><use>global</use><type>divider</type><validation></validation><text></text><default-value></default-value></parameter><parameter><name></name><use>global</use><type>label</type><validation></validation><text>The objects piped to the export script will normally be of type PSCustomObject. If you uncheck this, you will get objects of more complex type CSEntryChange instead (legacy behaviour). For more information on the CSEntryChange object type, please see MSDN Library.</text><default-value></default-value></parameter><parameter><name>Export simple objects</name><use>global</use><type>checkbox</type><validation></validation><text></text><default-value>1</default-value></parameter></parameter-definitions><parameter-values><parameter name="Password" type="encrypted-string" use="connectivity" encrypted="1"></parameter><parameter name="Password  (impersonate)" type="encrypted-string" use="connectivity" encrypted="1"></parameter><parameter name="Schema Script" type="string" use="connectivity">C:\Data\Dropbox\priv-demoenv\FIM\PSMA\homedir\schema.ps1</parameter><parameter name="Username" type="string" use="connectivity">administrator</parameter><parameter name="Domain (impersonate)" type="string" use="connectivity">develop</parameter><parameter name="Username (impersonate)" type="string" use="connectivity">sg</parameter><parameter name="Import Script" type="string" use="global">C:\Data\Dropbox\priv-demoenv\FIM\PSMA\homedir\import.ps1</parameter><parameter name="Export Script" type="string" use="global">C:\Data\Dropbox\priv-demoenv\FIM\PSMA\homedir\export.ps1</parameter><parameter name="Use paged import" type="checkbox" use="global">0</parameter><parameter name="Password Management Script" type="string" use="global">C:\Data\Dropbox\priv-demoenv\FIM\PSMA\homedir\password.ps1</parameter><parameter name="Export simple objects" type="checkbox" use="global">1</parameter></parameter-values><case_normalize_dn_for_anchor>1</case_normalize_dn_for_anchor><default_visible_attributes><attribute>id</attribute><attribute>objectguidstring</attribute><attribute>objectsidstring</attribute><attribute>samaccountname</attribute><attribute>distinguishedname</attribute><attribute>homedrive</attribute><attribute>homedirectory</attribute></default_visible_attributes></MAConfig>
+ </private-configuration>
+ <SyncConfig-refresh-schema>0</SyncConfig-refresh-schema>
+ <ma-partition-data>
+ <partition>
+  <id>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</id>
+  <name>default</name>
+  <creation-time>2013-07-04 09:28:13.310</creation-time>
+  <last-modification-time>2014-02-12 13:21:44.350</last-modification-time>
+  <version>80</version>
+  <selected>1</selected>
+  <filter>
+   <object-classes>
+    <object-class>person</object-class>
+   </object-classes>
+   <containers>
+    <exclusions/>
+    <inclusions>
+     <inclusion></inclusion>
+    </inclusions>
+   </containers>
+  </filter>
+  <custom-data>
+   <ecma-partition-data><dn>default</dn><name>default</name><is-domain>1</is-domain></ecma-partition-data><water-mark>AAA=</water-mark>
+  </custom-data>
+  <allowed-operations>7</allowed-operations>
+  <current>
+   <batch-number>22</batch-number>
+   <sequence-number>300</sequence-number>
+  </current>
+  <last-successful-batch>21</last-successful-batch>
+  <filter-hints>
+   <object-classes>
+    <object-class>
+     <name>person</name>
+     <hierarchy>
+      <object-class>person</object-class>
+     </hierarchy>
+     <included>1</included>
+    </object-class>
+   </object-classes>
+  </filter-hints>
+ </partition>
+</ma-partition-data>
+
+ <ma-run-data>
+ <run-configuration>
+  <id>{075884C8-CA22-4CEE-B280-CE2E724C1DC4}</id>
+  <name>DIDS</name>
+  <creation-time>2013-07-04 13:00:08.997</creation-time>
+  <version>1</version>
+  <last-modification-time>2013-07-04 13:00:08.997</last-modification-time>
+  <configuration><step><step-type type="delta-import"></step-type><threshold><batch-size>100</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data><extensible2-step-data><timeout>0</timeout><batch-size>100</batch-size></extensible2-step-data><parameter-values /></custom-data></step></configuration>
+ </run-configuration>
+ <run-configuration>
+  <id>{B8B6FBD4-62F4-42F8-976F-C13B8ABA6D56}</id>
+  <name>E</name>
+  <creation-time>2013-07-11 12:08:25.080</creation-time>
+  <version>1</version>
+  <last-modification-time>2013-07-11 12:08:25.080</last-modification-time>
+  <configuration><step><step-type type="export"></step-type><threshold><batch-size>100</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data><extensible2-step-data><timeout>0</timeout><batch-size>100</batch-size></extensible2-step-data><parameter-values /></custom-data></step></configuration>
+ </run-configuration>
+ <run-configuration>
+  <id>{EADE0FD1-3C70-4BDD-ABD5-71B6FBBB2202}</id>
+  <name>FI</name>
+  <creation-time>2013-07-04 10:16:38.020</creation-time>
+  <version>1</version>
+  <last-modification-time>2013-07-04 10:16:38.020</last-modification-time>
+  <configuration><step><step-type type="full-import"><import-subtype>to-cs</import-subtype></step-type><threshold><batch-size>100</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data><extensible2-step-data><timeout>0</timeout><batch-size>100</batch-size></extensible2-step-data><parameter-values /></custom-data></step></configuration>
+ </run-configuration>
+ <run-configuration>
+  <id>{7512DF62-4808-473D-9B60-89274DE3E15B}</id>
+  <name>FIFS</name>
+  <creation-time>2013-07-04 12:44:12.730</creation-time>
+  <version>1</version>
+  <last-modification-time>2013-07-04 12:44:12.730</last-modification-time>
+  <configuration><step><step-type type="full-import"><import-subtype>to-cs</import-subtype></step-type><threshold><batch-size>100</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data><extensible2-step-data><timeout>0</timeout><batch-size>100</batch-size></extensible2-step-data><parameter-values /></custom-data></step><step><step-type type="apply-rules"><apply-rules-subtype>reevaluate-flow-connectors</apply-rules-subtype></step-type><threshold><batch-size>1</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data></custom-data></step></configuration>
+ </run-configuration>
+ <run-configuration>
+  <id>{9E839C57-A720-4D62-946D-BE4F6143EDEB}</id>
+  <name>FS</name>
+  <creation-time>2014-02-12 12:13:35.580</creation-time>
+  <version>1</version>
+  <last-modification-time>2014-02-12 12:13:35.580</last-modification-time>
+  <configuration><step><step-type type="apply-rules"><apply-rules-subtype>reevaluate-flow-connectors</apply-rules-subtype></step-type><threshold><batch-size>1</batch-size></threshold><partition>{3DA3A94B-180D-440D-8618-CFE0419FDEC0}</partition><custom-data></custom-data></step></configuration>
+ </run-configuration>
+</ma-run-data>
+
+ <capabilities-mask>207b831</capabilities-mask>
+ <export-type>3</export-type>
+ <dn-construction/>
+ <password-sync><maximum-retry-count>10</maximum-retry-count><retry-interval>60</retry-interval><allow-low-security>0</allow-low-security><unlock-account>0</unlock-account></password-sync>
+ <component_mappings />
+</ma-data>
+
+<mv-data>
+ <import-attribute-flow><import-flow-set mv-object-type="person"><import-flows mv-attribute="displayName" type="ranked"><import-flow src-ma="{EDFFB2ED-2AD7-462A-BD46-5992D542FD1C}" cd-object-type="person" id="{EE58451F-D5A2-4FF7-B8AA-433339ED5B86}"><direct-mapping><src-attribute>displayname</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="accountName" type="ranked"><import-flow src-ma="{0DC35368-020A-440A-BD59-69C83C0A9B64}" cd-object-type="person" id="{31F4FDFE-9623-4FB4-8E58-FA2497DDC2B0}"><direct-mapping><src-attribute>accountname</src-attribute></direct-mapping></import-flow><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="user" id="{F932A8CC-EA43-4689-8A3F-AA287663E28E}"><direct-mapping><src-attribute>sAMAccountName</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="givenName" type="ranked"><import-flow src-ma="{0DC35368-020A-440A-BD59-69C83C0A9B64}" cd-object-type="person" id="{132E1EB2-7CCE-43A9-BD1B-CDEE36E0017A}"><direct-mapping><src-attribute>givenname</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="sn" type="ranked"><import-flow src-ma="{0DC35368-020A-440A-BD59-69C83C0A9B64}" cd-object-type="person" id="{FC935CB4-4DC8-4D23-B9ED-EF8D819F20BD}"><direct-mapping><src-attribute>sn</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="description" type="ranked"><import-flow src-ma="{0DC35368-020A-440A-BD59-69C83C0A9B64}" cd-object-type="person" id="{736DE98D-ED1F-4775-9A18-E3860DB54FEA}"><direct-mapping><src-attribute>description</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="departments" type="ranked"><import-flow src-ma="{0DC35368-020A-440A-BD59-69C83C0A9B64}" cd-object-type="person" id="{32B561FD-94B8-4E75-8A77-56BF759B9217}"><direct-mapping><src-attribute>departments</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="distinguishedName" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="user" id="{4ED69D2D-9109-4BC6-82D2-920B6604D9D2}"><direct-mapping><src-attribute intrinsic="true">dn</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="homeDirectory" type="ranked"><import-flow src-ma="{EDFFB2ED-2AD7-462A-BD46-5992D542FD1C}" cd-object-type="person" id="{84B1A508-9FA0-4DB6-B5E1-FA9E515A0920}"><direct-mapping><src-attribute>homedirectory</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="homeDrive" type="ranked"><import-flow src-ma="{EDFFB2ED-2AD7-462A-BD46-5992D542FD1C}" cd-object-type="person" id="{642A657A-5396-46C7-AB0A-DA0D64181F98}"><direct-mapping><src-attribute>homedrive</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="title" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="user" id="{8CF26E3A-3C9E-42B4-BA23-F3354F650713}"><direct-mapping><src-attribute>title</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="mail" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="user" id="{7507930F-7F6E-4939-82B7-2029C5A252E4}"><direct-mapping><src-attribute>mail</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="department" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="user" id="{95C7E0F4-A414-483D-BA53-08C4CEB45362}"><constant-mapping><constant-value>&lt;OI&gt;&lt;OT&gt;OrganizationalUnit&lt;/OT&gt;&lt;I&gt;1&lt;/I&gt;&lt;/OI&gt;</constant-value></constant-mapping></import-flow></import-flows></import-flow-set><import-flow-set mv-object-type="group"><import-flows mv-attribute="displayName" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="group" id="{6E88D8D8-AD46-4907-AAEE-C2D6758F12F7}"><direct-mapping><src-attribute>displayName</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="accountName" type="ranked"><import-flow src-ma="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}" cd-object-type="group" id="{EE153817-E5FA-4782-A5DF-9500E5AA5367}"><direct-mapping><src-attribute>sAMAccountName</src-attribute></direct-mapping></import-flow></import-flows><import-flows mv-attribute="member" type="ranked"><import-flow src-ma="{C53C017D-93D0-4157-8266-A33A3C916F0B}" cd-object-type="Group" id="{9EC6827E-75EB-4E63-B1FE-91FD3717C3F1}"><direct-mapping><src-attribute>Member</src-attribute></direct-mapping></import-flow></import-flows></import-flow-set><per-ma-options><ma-options ma-id="{53E9F171-EA94-46CB-BFF7-7B94F6E2E91D}"><enable-recall>true</enable-recall></ma-options><ma-options ma-id="{0DC35368-020A-440A-BD59-69C83C0A9B64}"><enable-recall>true</enable-recall></ma-options><ma-options ma-id="{EDFFB2ED-2AD7-462A-BD46-5992D542FD1C}"><enable-recall>true</enable-recall></ma-options><ma-options ma-id="{FEF18432-C536-4F53-9E17-13EF07921E2E}"><enable-recall>true</enable-recall></ma-options><ma-options ma-id="{C53C017D-93D0-4157-8266-A33A3C916F0B}"><enable-recall>true</enable-recall></ma-options><ma-options ma-id="{8F254FBB-CDE8-49FD-82D9-E85ABA85B37A}"><enable-recall>true</enable-recall></ma-options></per-ma-options></import-attribute-flow>
+</mv-data>
+
+</export-ma>

@@ -1,0 +1,1 @@
+"C:\Program Files\Microsoft Forefront Identity Manager\2010\Synchronization Service\Bin\mapackager.exe" /e:ma-exported.xml /c:ma-customization.xml /o:Granfeldt.PowerShell.ManagementAgent.xml
