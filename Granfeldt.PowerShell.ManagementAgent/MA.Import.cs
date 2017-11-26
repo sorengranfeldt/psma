@@ -73,10 +73,7 @@ namespace Granfeldt
 
 				InitializeConfigParameters(configParameters);
 
-				if (ShouldImpersonate())
-				{
-					impersonationToken = SetupImpersonationToken();
-				}
+				//SetupImpersonationToken();
 
 				OpenRunspace();
 
@@ -476,6 +473,8 @@ namespace Granfeldt
 			try
 			{
 				CloseRunspace();
+
+				//RevertImpersonation();
 
 				CloseImportConnectionResults cicr = new CloseImportConnectionResults();
 				Tracer.TraceInformation("custom-data {0}", importRunStep.CustomData);

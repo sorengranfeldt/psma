@@ -36,7 +36,7 @@ namespace Granfeldt
 			TraceInformation("enter {0}", entryPoint);
 			Indent();
 			Process currentProc = Process.GetCurrentProcess();
-			Tracer.TraceInformation("memory-usage {0:n0}Kb, private memomry {1:n0}Kb", GC.GetTotalMemory(true) / 1024, currentProc.PrivateMemorySize64 / 1024);
+			Tracer.TraceInformation("memory-usage {0:n0}Kb, private memory {1:n0}Kb", GC.GetTotalMemory(true) / 1024, currentProc.PrivateMemorySize64 / 1024);
 		}
 		public static void Exit(string entryPoint)
 		{

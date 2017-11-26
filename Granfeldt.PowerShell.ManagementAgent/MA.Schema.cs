@@ -31,11 +31,6 @@ namespace Granfeldt
 				Schema schema = Schema.Create();
 				InitializeConfigParameters(configParameters);
 
-				if (ShouldImpersonate())
-				{
-					impersonationToken = SetupImpersonationToken();
-				}
-
 				OpenRunspace();
 				Command cmd = new Command(Path.GetFullPath(SchemaScript));
 				cmd.Parameters.Add(new CommandParameter("Username", Username));

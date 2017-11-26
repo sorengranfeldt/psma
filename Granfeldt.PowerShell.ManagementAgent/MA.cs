@@ -96,6 +96,7 @@ using System.Diagnostics;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Principal;
 
 namespace Granfeldt
 {
@@ -139,21 +140,12 @@ namespace Granfeldt
 
 	public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
 	{
-		static class NativeMethods
-		{
-			[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-			public static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword, int dwLogonType, int dwLogonProvider, out IntPtr phToken);
-		}
-
 		string whatExactlyAreYouDoing = "You have violated usage rights by decompiling this Management Agent.".ToUpper();
 
 		// New-EventLog -Source "PowerShell Management Agent" -LogName Application
 		const string EventLogSource = "PowerShell Management Agent";
 		const string EventLogName = "Application";
 
-		const int LOGON32_LOGON_INTERACTIVE = 2;
-		const int LOGON32_PROVIDER_DEFAULT = 0;
-		IntPtr impersonationToken = IntPtr.Zero;
 		string impersonationUserDomain;
 		string impersonationUsername;
 		string impersonationUserPassword;
@@ -161,6 +153,44 @@ namespace Granfeldt
 		string Username;
 		string Password;
 		SecureString SecureStringPassword = null;
+
+		void WhoAmI()
+		{
+			Tracer.Enter("show-identity");
+			Tracer.Indent();
+			try
+			{
+				using (WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent())
+				{
+					Tracer.TraceInformation("identity-name: {0}", currentIdentity.Name);
+					Tracer.TraceInformation("identity-token: {0}", currentIdentity.Token);
+					Tracer.TraceInformation("identity-user-value: {0}", currentIdentity.User.Value);
+					if (currentIdentity.Actor != null)
+					{
+						Tracer.TraceInformation("identity-actor: {0}", currentIdentity.Actor.Name);
+						Tracer.TraceInformation("identity-actor-auth-type: {0}", currentIdentity.Actor.AuthenticationType);
+					}
+					if (currentIdentity.Groups != null)
+					{
+						foreach (IdentityReference group in currentIdentity.Groups)
+						{
+							NTAccount account = group.Translate(typeof(NTAccount)) as NTAccount;
+							Tracer.TraceInformation("group-membership {0}", account.Value);
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Tracer.TraceError("error-showing-current-identity", ex);
+				throw;
+			}
+			finally
+			{
+				Tracer.Unindent();
+				Tracer.Exit("show-identity");
+			}
+		}
 
 		PSCredential GetSecureCredentials()
 		{

@@ -36,10 +36,6 @@ namespace Granfeldt
 			try
 			{
 				InitializeConfigParameters(configParameters);
-				if (ShouldImpersonate())
-				{
-					impersonationToken = SetupImpersonationToken();
-				}
 
 				OpenRunspace();
 				schema = types;

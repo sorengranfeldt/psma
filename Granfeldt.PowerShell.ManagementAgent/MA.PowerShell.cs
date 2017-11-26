@@ -42,6 +42,8 @@ namespace Granfeldt
 		Collection<PSObject> InvokePowerShellScript(Command command, PSDataCollection<PSObject> pipelineInput)
 		{
 			Tracer.Enter("invokepowershellscript");
+			SetupImpersonationToken();
+
 			Collection<PSObject> results = new Collection<PSObject>();
 			try
 			{
@@ -55,40 +57,47 @@ namespace Granfeldt
 					{
 						Tracer.TraceInformation("pipeline-object-count {0:n0}", pipelineInput.Count);
 					}
-					if (ShouldImpersonate())
+					//if (ShouldImpersonate())
+					//{
+					//	using (WindowsIdentity.Impersonate(impersonationToken))
+					//	{
+					//		Tracer.TraceInformation("start-invoke-script {0}", command.CommandText);
+					//		if (pipelineInput != null)
+					//		{
+					//			powershell.Invoke(pipelineInput, results);
+					//		}
+					//		else
+					//		{
+					//			powershell.Invoke(null, results);
+					//		}
+					//	}
+					//}
+					//else
+					//{
+
+					Tracer.TraceInformation("start-invoke-script {0}", command.CommandText);
+					if (pipelineInput != null)
 					{
-						using (WindowsIdentity.Impersonate(impersonationToken))
-						{
-							Tracer.TraceInformation("start-invoke-script {0}", command.CommandText);
-							if (pipelineInput != null)
-							{
-								powershell.Invoke(pipelineInput, results);
-							}
-							else
-							{
-								powershell.Invoke(null, results);
-							}
-						}
+						powershell.Invoke(pipelineInput, results);
 					}
 					else
 					{
-						Tracer.TraceInformation("start-invoke-script {0}", command.CommandText);
-						if (pipelineInput != null)
-						{
-							powershell.Invoke(pipelineInput, results);
-						}
-						else
-						{
-							powershell.Invoke(null, results);
-						}
+						powershell.Invoke(null, results);
 					}
+					//}
 					Tracer.TraceInformation("end-invoke-script {0}", command.CommandText);
-					Tracer.TraceInformation("script-had-errors {0}", powershell.HadErrors);
 				}
-				catch (RuntimeException runtimeException)
+				catch (RuntimeException e)
 				{
-					Tracer.TraceError("script-invocation-error", runtimeException);
+					Tracer.TraceError("script-invocation-error", e);
+					Tracer.TraceError("script-invocation-inner-exception", e.InnerException != null ? e.InnerException : e);
+					Tracer.TraceError("script-invocation-inner-exception-message", e.InnerException != null ? e.InnerException.Message : "n/a");
+					Tracer.TraceError("script-invocation-error-stacktrace", e.StackTrace);
 					throw;
+				}
+				finally
+				{
+					Tracer.TraceInformation("script-had-errors {0}", powershell.HadErrors);
 				}
 			}
 			catch (Exception ex)
@@ -98,6 +107,7 @@ namespace Granfeldt
 			}
 			finally
 			{
+				RevertImpersonation();
 				Tracer.Exit("invokepowershellscript");
 			}
 			return results;

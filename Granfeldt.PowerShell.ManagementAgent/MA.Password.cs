@@ -30,10 +30,7 @@ namespace Granfeldt
 			try
 			{
 				InitializeConfigParameters(configParameters);
-				if (ShouldImpersonate())
-				{
-					impersonationToken = SetupImpersonationToken();
-				}
+
 				OpenRunspace();
 			}
 			catch (Exception ex)
