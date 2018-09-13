@@ -86,6 +86,11 @@
 // nov 20, 2015 | soren granfeldt
 //	- removed default values for scripts
 //	- added check for null securestring before building PSCredentials for scripts
+// july 5, 2018 | soren granfeldt
+//  - removed indent and unindent from tracer
+//  - removed erroneous message about paged import not supported
+//  - added schema (as psobject) as parameter to import and export scripts
+//  - upped version to 5.5.3.1309
 
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
 
@@ -157,7 +162,6 @@ namespace Granfeldt
 		void WhoAmI()
 		{
 			Tracer.Enter("show-identity");
-			Tracer.Indent();
 			try
 			{
 				using (WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent())
@@ -187,7 +191,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("show-identity");
 			}
 		}
@@ -204,9 +207,7 @@ namespace Granfeldt
 
 		public PowerShellManagementAgent()
 		{
-			Tracer.IndentLevel = 0;
 			Tracer.Enter("initialize");
-			Tracer.Indent();
 			try
 			{
 				Tracer.TraceInformation("memory-usage {0:n} Mb", GC.GetTotalMemory(true) / 102400);
@@ -230,7 +231,7 @@ namespace Granfeldt
 					EventTypeFilter filter = new EventTypeFilter(SourceLevels.Warning | SourceLevels.Error | SourceLevels.Critical);
 					eventLog.TraceOutputOptions = TraceOptions.Callstack;
 					eventLog.Filter = filter;
-					Tracer.Trace.Listeners.Add(eventLog);
+					Tracer.trace.Listeners.Add(eventLog);
 					if (!EventLog.SourceExists(EventLogSource))
 					{
 						Tracer.TraceInformation("creating-eventlog-source '{0}'", EventLogSource);
@@ -251,7 +252,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("initialize");
 			}
 		}
@@ -259,7 +259,6 @@ namespace Granfeldt
 		public void Dispose()
 		{
 			Tracer.Enter("dispose");
-			Tracer.Indent();
 			try
 			{
 				Tracer.TraceInformation("clearing-variables");
@@ -275,7 +274,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("dispose");
 			}
 		}

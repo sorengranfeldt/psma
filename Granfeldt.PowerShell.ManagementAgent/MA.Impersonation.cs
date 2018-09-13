@@ -173,7 +173,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("setupimpersonationtoken");
 			}
 		}
@@ -186,7 +185,6 @@ namespace Granfeldt
 			}
 
 			Tracer.Enter("revertimpersonation");
-			Tracer.Indent();
 			try
 			{
 				Tracer.TraceInformation("closing-impersonation-context");
@@ -204,31 +202,10 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("revertimpersonation");
 			}
 		}
 
-		//IntPtr SetupImpersonationTokenOld()
-		//{
-		//	Tracer.Enter("setupimpersonationtoken");
-		//	IntPtr token = IntPtr.Zero;
-
-		//	bool success = NativeMethods.LogonUser(impersonationUsername, impersonationUserDomain, impersonationUserPassword, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out token);
-		//	if (!success)
-		//	{
-		//		SecurityException ex = new SecurityException(string.Format("failed-to-impersonate: domain: '{0}', username: '{1}', password: **secret***", impersonationUserDomain, impersonationUsername));
-		//		Tracer.TraceError(ex.ToString());
-		//		throw ex;
-		//	}
-		//	else
-		//	{
-		//		Tracer.TraceInformation("succeeded-in-impersonating: domain: '{0}', username: '{1}', password: **secret***", impersonationUserDomain, impersonationUsername);
-		//	}
-
-		//	Tracer.Exit("setupimpersonationtoken");
-		//	return token;
-		//}
 	}
 
 }

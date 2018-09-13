@@ -10,7 +10,6 @@ namespace Granfeldt
 		IList<ConfigParameterDefinition> IMAExtensible2GetParameters.GetConfigParameters(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, ConfigParameterPage page)
 		{
 			Tracer.Enter("getconfigparameters");
-			Tracer.Indent();
 			try
 			{
 				List<ConfigParameterDefinition> configParametersDefinitions = new List<ConfigParameterDefinition>();
@@ -67,7 +66,6 @@ namespace Granfeldt
 			try
 			{
 				Tracer.Enter("validateconfigparameters");
-				Tracer.Indent();
 				if (page == ConfigParameterPage.Connectivity)
 				{
 					string schemaScriptFilename = Path.GetFullPath(configParameters[Constants.Parameters.SchemaScript].Value);
@@ -102,7 +100,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("validateconfigparameters");
 			}
 			return new ParameterValidationResult(ParameterValidationResultCode.Success, "", "");
@@ -110,7 +107,6 @@ namespace Granfeldt
 		public void InitializeConfigParameters(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters)
 		{
 			Tracer.Enter("initializeconfigparameters");
-			Tracer.Indent();
 			try
 			{
 				if (configParameters != null)
@@ -145,7 +141,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("initializeconfigparameters");
 			}
 		}

@@ -4,72 +4,54 @@ using System.Text;
 
 namespace Granfeldt
 {
-	public static class Tracer
-	{
-		//TODO: convert ident to stringbuilder
-		const string SwitchName = "PSMA";
-		const string SourceName = "PSMA";
-		public static TraceSource Trace = new TraceSource(SourceName, SourceLevels.All);
-		static string IndentText = ""; 
+    public static class Tracer
+    {
+        const string switchName = "PSMA";
+        const string sourceName = "PSMA";
+        public static TraceSource trace = new TraceSource(sourceName, SourceLevels.All);
 
-		public static int IndentLevel
-		{
-			get
-			{
-				return IndentText.Length;
-			}
-			set
-			{
-				IndentText = "";
-			}
-		}
-		public static void Indent()
-		{
-			IndentText = IndentText + "  ";
-		}
-		public static void Unindent()
-		{
-			IndentText = IndentText.EndsWith("  ") ? IndentText.Remove(IndentText.Length - 2) : IndentText;
-		}
-		public static void Enter(string entryPoint)
-		{
-			TraceInformation("enter {0}", entryPoint);
-			Indent();
-			Process currentProc = Process.GetCurrentProcess();
-			Tracer.TraceInformation("memory-usage {0:n0}Kb, private memory {1:n0}Kb", GC.GetTotalMemory(true) / 1024, currentProc.PrivateMemorySize64 / 1024);
-		}
-		public static void Exit(string entryPoint)
-		{
-			Process currentProc = Process.GetCurrentProcess();
-			Tracer.TraceInformation("memory-usage {0:n0}Kb, private memory {1:n0}Kb", GC.GetTotalMemory(true) / 1024, currentProc.PrivateMemorySize64 / 1024);
-			Unindent();
-			TraceInformation("exit {0}", entryPoint);
-		}
-		public static void TraceInformation(string message, params object[] param)
-		{
-			Trace.TraceInformation(IndentText + message, param);
-		}
-		public static void TraceWarning(string message, params object[] param)
-		{
-			Trace.TraceEvent(TraceEventType.Warning, -1, IndentText + message, param);
-		}
-		public static void TraceError(string message, int id, params object[] param)
-		{
-			Trace.TraceEvent(TraceEventType.Error, id, IndentText + message, param);
-		}
-		public static void TraceError(string message, Exception ex)
-		{
-			Trace.TraceEvent(TraceEventType.Error, ex.HResult, IndentText + "{0}, {1}", message, ex.Message);
-		}
-		public static void TraceError(string message, params object[] param)
-		{
-			TraceError(message, -2, param);
-		}
-		static Tracer()
-		{
-			SourceSwitch sw = new SourceSwitch(SwitchName, SwitchName);
-			sw.Level = SourceLevels.All;
-			Trace.Switch = sw;
-		}
-	}
+        public static void Enter(string entryPoint)
+        {
+            TraceInformation("enter {0}", entryPoint);
+        }
+        public static void Exit(string entryPoint)
+        {
+            TraceInformation("exit {0}", entryPoint);
+        }
+        public static void TraceInformation(string message, params object[] param)
+        {
+            trace.TraceInformation(message, param);
+        }
+        public static void TraceWarning(string message, int warningCode = 1, params object[] param)
+        {
+            string msg = string.Format(message, param);
+            trace.TraceEvent(TraceEventType.Warning, warningCode, GetMessageFromException(null, msg));
+        }
+        internal static string GetMessageFromException(Exception ex, string message)
+        {
+            if (ex == null)
+                return message;
+            else
+                return string.Format("{0}, {1}", message, ex.GetBaseException()?.Message);
+        }
+        public static void TraceError(string message, int id, params object[] param)
+        {
+            trace.TraceEvent(TraceEventType.Error, id, message, param);
+        }
+        public static void TraceError(string message, Exception ex, int errorCode = 1)
+        {
+            string msg = GetMessageFromException(ex, message);
+            trace.TraceEvent(TraceEventType.Error, ex.HResult, msg);
+        }
+        public static void TraceError(string message, params object[] param)
+        {
+            TraceError(message, 0, param);
+        }
+        static Tracer()
+        {
+            SourceSwitch sw = new SourceSwitch(switchName, switchName);
+            sw.Level = SourceLevels.All;
+            trace.Switch = sw;
+        }
+    }
 }

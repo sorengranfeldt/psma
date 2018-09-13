@@ -28,8 +28,8 @@ namespace Granfeldt
 		}
 		static void Warning_DataAdded(object sender, DataAddedEventArgs e)
 		{
-			Tracer.TraceWarning("warning {0}", ((PSDataCollection<WarningRecord>)sender)[e.Index].ToString());
-		}
+            Tracer.TraceWarning("warning {0}", 1, ((PSDataCollection<WarningRecord>)sender)[e.Index]);
+        }
 		static void Debug_DataAdded(object sender, DataAddedEventArgs e)
 		{
 			Tracer.TraceInformation("debug {0}", ((PSDataCollection<DebugRecord>)sender)[e.Index].ToString());
@@ -116,7 +116,6 @@ namespace Granfeldt
 		void OpenRunspace()
 		{
 			Tracer.Enter("openrunspace");
-			Tracer.Indent();
 			try
 			{
 				if (runspace == null)
@@ -177,7 +176,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("openrunspace");
 			}
 		}
@@ -194,7 +192,6 @@ namespace Granfeldt
 		void CloseRunspace()
 		{
 			Tracer.Enter("closerunspace");
-			Tracer.Indent();
 			try
 			{
 				if (powershell != null)
@@ -227,7 +224,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("closerunspace");
 			}
 		}

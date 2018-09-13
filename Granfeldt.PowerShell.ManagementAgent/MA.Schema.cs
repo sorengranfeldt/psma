@@ -25,7 +25,6 @@ namespace Granfeldt
 		Schema IMAExtensible2GetSchema.GetSchema(KeyedCollection<string, ConfigParameter> configParameters)
 		{
 			Tracer.Enter("getschema");
-			Tracer.Indent();
 			try
 			{
 				Schema schema = Schema.Create();
@@ -134,7 +133,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("getschema");
 			}
 		}

@@ -24,9 +24,7 @@ namespace Granfeldt
 		}
 		void IMAExtensible2Password.OpenPasswordConnection(KeyedCollection<string, ConfigParameter> configParameters, Partition partition)
 		{
-			Tracer.IndentLevel = 0;
 			Tracer.Enter("openpasswordconnection");
-			Tracer.Indent();
 			try
 			{
 				InitializeConfigParameters(configParameters);
@@ -40,14 +38,12 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("openpasswordconnection");
 			}
 		}
 		void IMAExtensible2Password.ChangePassword(CSEntry csentry, SecureString oldPassword, SecureString newPassword)
 		{
 			Tracer.Enter("changepassword");
-			Tracer.Indent();
 			try
 			{
 				CallPasswordScript(PasswordOperation.Change, csentry, oldPassword, newPassword, PasswordOptions.None);
@@ -59,14 +55,12 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("changepassword");
 			}
 		}
 		void CallPasswordScript(PasswordOperation Action, CSEntry csentry, SecureString oldPassword, SecureString newPassword, PasswordOptions options)
 		{
 			Tracer.Enter("callpasswordscript");
-			Tracer.Indent();
 			PSDataCollection<PSObject> passwordPipeline = new PSDataCollection<PSObject>();
 			try
 			{
@@ -95,14 +89,12 @@ namespace Granfeldt
 			finally
 			{
 				passwordPipeline = null;
-				Tracer.Unindent();
 				Tracer.TraceInformation("callpasswordscript");
 			}
 		}
 		void IMAExtensible2Password.SetPassword(CSEntry csentry, SecureString newPassword, PasswordOptions options)
 		{
 			Tracer.Enter("setpassword");
-			Tracer.Indent();
 			try
 			{
 				CallPasswordScript(PasswordOperation.Set, csentry, new SecureString(), newPassword, options);
@@ -114,14 +106,12 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("setpassword");
 			}
 		}
 		void IMAExtensible2Password.ClosePasswordConnection()
 		{
 			Tracer.Enter("closepasswordconnection");
-			Tracer.Indent();
 			try
 			{
 				CloseRunspace();
@@ -134,7 +124,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("closepasswordconnection");
 			}
 		}

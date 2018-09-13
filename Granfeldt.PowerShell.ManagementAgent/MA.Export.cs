@@ -1,4 +1,7 @@
-﻿using Microsoft.MetadirectoryServices;
+﻿// july 5, 2018, soren granfeldt
+//  - added schema psobject as parameter to export script
+
+using Microsoft.MetadirectoryServices;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,17 +33,15 @@ namespace Granfeldt
 		}
 		void IMAExtensible2CallExport.OpenExportConnection(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, Schema types, OpenExportConnectionRunStep exportRunStep)
 		{
-			Tracer.IndentLevel = 0;
 			Tracer.Enter("openexportconnection");
-			Tracer.Indent();
 			try
 			{
 				InitializeConfigParameters(configParameters);
 
 				OpenRunspace();
-				schema = types;
+                InitializeSchemaVariables(types);
 
-				exportType = exportRunStep.ExportType;
+                exportType = exportRunStep.ExportType;
 				Tracer.TraceInformation("export-type '{0}'", exportType);
 				exportBatchSize = exportRunStep.BatchSize;
 				Tracer.TraceInformation("export-batch-size '{0}'", exportBatchSize);
@@ -52,14 +53,12 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("openexportconnection");
 			}
 		}
 		PutExportEntriesResults IMAExtensible2CallExport.PutExportEntries(IList<CSEntryChange> csentries)
 		{
 			Tracer.Enter("putexportentries");
-			Tracer.Indent();
 			PutExportEntriesResults exportEntries = new PutExportEntriesResults();
 			PSDataCollection<PSObject> exportPipeline = new PSDataCollection<PSObject>();
 			try
@@ -69,8 +68,9 @@ namespace Granfeldt
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
 				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials()));
 				cmd.Parameters.Add(new CommandParameter("ExportType", exportType));
+                cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
 
-				foreach (CSEntryChange csentryChange in csentries)
+                foreach (CSEntryChange csentryChange in csentries)
 				{
 					Tracer.TraceInformation("adding-object id: {0}, dn: '{1}' [{2}]", csentryChange.Identifier, csentryChange.DN, csentryChange.ObjectModificationType);
 					if (ExportSimpleObjects)
@@ -196,14 +196,12 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("putexportentries");
 			}
 		}
 		void IMAExtensible2CallExport.CloseExportConnection(CloseExportConnectionRunStep exportRunStep)
 		{
 			Tracer.Enter("closeexportconnection");
-			Tracer.Indent();
 			try
 			{
 				CloseRunspace();
@@ -216,7 +214,6 @@ namespace Granfeldt
 			}
 			finally
 			{
-				Tracer.Unindent();
 				Tracer.Exit("closeexportconnection");
 			}
 		}
