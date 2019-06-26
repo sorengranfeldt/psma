@@ -28,13 +28,13 @@ These are only a subset of some of the use cases. Many other implementations of 
 ## PSMA Implementation Examples
 The following are but some examples of users who have used the PSMA in order to automate specific use cases in FIM/MIM. For additional examples, see [Wiki->Samples](https://github.com/sorengranfeldt/psma/wiki/Samples).
 
-* [Workday HR Integration](https://blog.kloud.com.au/2018/09/25/building-a-microsoft-identity-manager-powershell-management-agent-for-workday-hr/)
-* [Azure B2B Automation](https://blog.kloud.com.au/2018/08/27/automating-azure-ad-b2b-guest-invitations-using-microsoft-identity-manager/)
+* [Workday HR Integration](https://blog.darrenjrobinson.com/building-a-microsoft-identity-manager-powershell-management-agent-for-workday-hr/) 
+* [Azure B2B Automation](https://blog.darrenjrobinson.com/automating-azure-ad-b2b-guest-invitations-using-microsoft-identity-manager/)
 * [Azure B2B and Exchange Online Automation](https://github.com/puttyq/mim.psma.azureb2b)
-* [Hybrid Exchange Provisioning](https://blog.kloud.com.au/2017/12/19/provisioning-hybrid-exchange-exchange-online-mailboxes-with-microsoft-identity-manager/)
-* [xMatters Integration](https://blog.kloud.com.au/2017/11/28/building-a-fim-mim-management-agent-for-xmatters/)
-* [Pwned Password Detection with MIM](https://blog.kloud.com.au/2017/08/08/identifying-active-directory-users-with-pwned-passwords-using-microsoftforefront-identity-manager/)
-* [Office 365 Profile Photo Sync](https://blog.kloud.com.au/2017/05/23/synchronizing-exchange-onlineoffice-365-user-profile-photos-with-fimmim/)
+* [Hybrid Exchange Provisioning](https://blog.darrenjrobinson.com/provisioning-hybrid-exchangeexchange-online-mailboxes-with-microsoft-identity-manager/)
+* [xMatters Integration](https://blog.darrenjrobinson.com/building-a-fimmim-management-agent-for-xmatters/)
+* [Pwned Password Detection with MIM](https://blog.darrenjrobinson.com/updated-identifying-active-directory-users-with-pwned-passwords-using-microsoftforefront-identity-manager/)
+* [Office 365 Profile Photo Sync](https://blog.darrenjrobinson.com/how-to-synchronize-users-active-directoryazure-active-directory-photo-using-microsoft-identity-manager/)
 * [SAP HCM Import](https://www.puttyq.com/sap-integration-using-powershell-part-1/)
 
 ## Other Tools and Examples
