@@ -178,8 +178,20 @@ namespace Granfeldt
 					{
 						foreach (IdentityReference group in currentIdentity.Groups)
 						{
-							NTAccount account = group.Translate(typeof(NTAccount)) as NTAccount;
-							Tracer.TraceInformation("group-membership {0}", account.Value);
+							try
+							{
+								NTAccount account = group.Translate(typeof(NTAccount)) as NTAccount;
+								Tracer.TraceInformation("group-membership {0}", account.Value);
+							}
+							catch (Exception ex)
+                            {
+								/*
+								 * If the SID cannot be resolved, log the SID, but don't throw the exception.
+								 * Throwing the exception kills the run profile, where the membership might be totally
+								 * irrelevant. We do log the SID for diagnostic purpose.
+								 */
+								Tracer.TraceError($"error-resolving-current-group-name: {group.Value}", ex);
+							}
 						}
 					}
 				}
