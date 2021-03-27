@@ -33,7 +33,7 @@ namespace Granfeldt
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateEncryptedStringParameter(Constants.Parameters.ImpersonationPassword, ""));
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
-                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("Specify any additional configuration parameters to be passed to the Powershell scripts. Each values should be on seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)"));
+                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("Specify any additional configuration parameters to be passed to the Powershell scripts. Each value should be on a seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)"));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateTextParameter(Constants.Parameters.ConfigurationParameters, ""));
 
                         break;
