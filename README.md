@@ -39,7 +39,7 @@ The following are but some examples of users who have used the PSMA in order to 
 
 ## Other Tools and Examples
 
-* [Build Dynmaic Schema for PSMA](https://blog.darrenjrobinson.com/automate-the-generation-of-a-granfeldt-powershell-management-agent-schema-definition-file/)
+* [Build Dynamic Schema for PSMA](https://blog.darrenjrobinson.com/automate-the-generation-of-a-granfeldt-powershell-management-agent-schema-definition-file/)
 
 ## Usage and Implementation
 
