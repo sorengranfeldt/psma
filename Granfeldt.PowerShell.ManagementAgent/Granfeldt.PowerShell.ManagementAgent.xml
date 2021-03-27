@@ -310,7 +310,7 @@
             <type>label</type>
             <validation>
             </validation>
-            <text>Specify any additional configuration parameters to be passed to the Powershell scripts. Each values should be on seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)</text>
+            <text>Specify any additional configuration parameters to be passed to the Powershell scripts. Each value should be on a seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)</text>
             <default-value>
             </default-value>
           </parameter>
