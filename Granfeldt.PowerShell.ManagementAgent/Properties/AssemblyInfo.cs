@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Goverco")]
 [assembly: AssemblyProduct("PowerShell Management Agent")]
-[assembly: AssemblyCopyright("Copyright © Soren Granfeldt 2011-2018")]
+[assembly: AssemblyCopyright("Copyright © Soren Granfeldt 2011-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -37,6 +37,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("5.5")]
-[assembly: AssemblyFileVersion("5.5.3.1309")]
-[assembly: AssemblyInformationalVersion("5.5")]
+[assembly: AssemblyVersion("5.6")]
+[assembly: AssemblyFileVersion("5.6.3.2021")]
+[assembly: AssemblyInformationalVersion("5.6")]

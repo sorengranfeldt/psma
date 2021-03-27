@@ -91,12 +91,18 @@
 //  - removed erroneous message about paged import not supported
 //  - added schema (as psobject) as parameter to import and export scripts
 //  - upped version to 5.5.3.1309
+// march 27, 2021 | soren granfeldt
+//	- added aux credentials set for scripts
+//	- added support for configuration parameters
+//	- merged try/catch pull request (#18 Added a try catch to the resolving of group names)
+//	- upped version to 5.6.3.2021
 
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
 
 using Microsoft.MetadirectoryServices;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
@@ -111,6 +117,11 @@ namespace Granfeldt
 		{
 			public static string Username = "Username";
 			public static string Password = "Password";
+
+			public static string UsernameAux = "Username (auxiliary)";
+			public static string PasswordAux = "Password (auxiliary)";
+
+			public static string ConfigurationParameters = "Configuration parameters";
 
 			public static string ImpersonationDomain = "Domain (impersonate)";
 			public static string ImpersonationUsername = "Username (impersonate)";
@@ -145,8 +156,6 @@ namespace Granfeldt
 
 	public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
 	{
-		string whatExactlyAreYouDoing = "You have violated usage rights by decompiling this Management Agent.".ToUpper();
-
 		// New-EventLog -Source "PowerShell Management Agent" -LogName Application
 		const string EventLogSource = "PowerShell Management Agent";
 		const string EventLogName = "Application";
@@ -158,6 +167,12 @@ namespace Granfeldt
 		string Username;
 		string Password;
 		SecureString SecureStringPassword = null;
+
+		string UsernameAux;
+		string PasswordAux;
+		SecureString SecureStringPasswordAux = null;
+
+		Dictionary<string, string> ConfigurationParameter = new Dictionary<string, string>();
 
 		void WhoAmI()
 		{
@@ -207,15 +222,16 @@ namespace Granfeldt
 			}
 		}
 
-		PSCredential GetSecureCredentials()
+		PSCredential GetSecureCredentials(string username, SecureString secureStringPassword)
 		{
-			if (string.IsNullOrEmpty(Username) || (SecureStringPassword == null))
+			if (string.IsNullOrEmpty(username) || (secureStringPassword == null))
 			{
 				Tracer.TraceInformation("username-or-password-empty returning-null-pscredentials");
 				return null;
 			}
-			return new PSCredential(Username, SecureStringPassword);
+			return new PSCredential(username, secureStringPassword);
 		}
+
 
 		public PowerShellManagementAgent()
 		{

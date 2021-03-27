@@ -67,7 +67,14 @@ namespace Granfeldt
 				Command cmd = new Command(Path.GetFullPath(PasswordManagementScript));
 				cmd.Parameters.Add(new CommandParameter("User", Username));
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
-				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials()));
+				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
+
+				cmd.Parameters.Add(new CommandParameter("UsernameAux", UsernameAux));
+				cmd.Parameters.Add(new CommandParameter("PasswordAux", PasswordAux));
+				cmd.Parameters.Add(new CommandParameter("CredentialsAux", GetSecureCredentials(UsernameAux, SecureStringPasswordAux)));
+
+				cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
+
 				cmd.Parameters.Add(new CommandParameter("Action", Action.ToString()));
 
 				if (options.HasFlag(PasswordOptions.UnlockAccount)) cmd.Parameters.Add(new CommandParameter("UnlockAccount"));

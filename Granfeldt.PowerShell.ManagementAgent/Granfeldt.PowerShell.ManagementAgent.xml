@@ -11,9 +11,9 @@
     <format-version>1</format-version>
     <internal-version>1</internal-version>
     <ma-companyname>Soren Granfeldt</ma-companyname>
-    <subtype>PowerShell</subtype>
-    <ma-listname>PowerShell</ma-listname>
-    <id>{FEF18432-C536-4F53-9E17-13EF07921E2E}</id>
+    <subtype>PowerShell (Soren Granfeldt)</subtype>
+    <ma-listname>PowerShell (Soren Granfeldt)</ma-listname>
+    <id>{C75B4BAD-B875-4863-89BE-3F5EBE1E080D}</id>
     <category>Extensible2</category>
     <password-sync-allowed>1</password-sync-allowed>
     <schema>
@@ -21,42 +21,27 @@
         <dsml:directory-schema ms-dsml:no-objectclass-validation="true">
           <dsml:class id="person" type="structural" ms-dsml:locked="1">
             <dsml:name>person</dsml:name>
-            <dsml:attribute ref="#objectguidstring" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#objectsidstring" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#samaccountname" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#distinguishedname" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#homedrive" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#homedirectory" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#id" required="true" ms-dsml:isAnchor="true" />
+            <dsml:attribute ref="#Department" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#FirstName" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#LastName" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#UserName" required="true" ms-dsml:isAnchor="true" />
             <dsml:attribute ref="#export_password" required="false" />
           </dsml:class>
-          <dsml:attribute-type id="objectguidstring" single-value="true">
-            <dsml:name>objectguidstring</dsml:name>
+          <dsml:attribute-type id="Department" single-value="true">
+            <dsml:name>Department</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="objectsidstring" single-value="true">
-            <dsml:name>objectsidstring</dsml:name>
+          <dsml:attribute-type id="FirstName" single-value="true">
+            <dsml:name>FirstName</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="samaccountname" single-value="true">
-            <dsml:name>samaccountname</dsml:name>
+          <dsml:attribute-type id="LastName" single-value="true">
+            <dsml:name>LastName</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="distinguishedname" single-value="true">
-            <dsml:name>distinguishedname</dsml:name>
+          <dsml:attribute-type id="UserName" single-value="true" ms-dsml:immutable="true">
+            <dsml:name>UserName</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
-          </dsml:attribute-type>
-          <dsml:attribute-type id="homedrive" single-value="true">
-            <dsml:name>homedrive</dsml:name>
-            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
-          </dsml:attribute-type>
-          <dsml:attribute-type id="homedirectory" single-value="true">
-            <dsml:name>homedirectory</dsml:name>
-            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
-          </dsml:attribute-type>
-          <dsml:attribute-type id="id" single-value="true" ms-dsml:immutable="true">
-            <dsml:name>id</dsml:name>
-            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.5</dsml:syntax>
           </dsml:attribute-type>
           <dsml:attribute-type id="export_password" single-value="true" ms-dsml:encrypted="true" ms-dsml:export-only="true">
             <dsml:name>export_password</dsml:name>
@@ -73,7 +58,8 @@
     <projection />
     <export-attribute-flow>
     </export-attribute-flow>
-    <extension />
+    <extension>
+    </extension>
     <controller-configuration>
       <application-architecture>process</application-architecture>
     </controller-configuration>
@@ -104,10 +90,11 @@
             <attributes>
             </attributes>
             <anchor>
-              <attribute object_class="person">id</attribute>
+              <attribute object_class="person">UserName</attribute>
             </anchor>
           </xmlwizard>
           <ma-help-text>With this management agent, you can run Powershell scripts for import, export and password management.</ma-help-text>
+          <ma-help-text>With this management agent, you can run PowerShell scripts for import, export and password management.</ma-help-text>
           <ma-help-text>With this management agent, you can run PowerShell scripts for import, export and password management.</ma-help-text>
         </ui-data>
         <importing>
@@ -147,7 +134,7 @@
           <import-mode>call-based</import-mode>
           <export-enabled data-owner="ISV">1</export-enabled>
           <import-enabled data-owner="ISV">1</import-enabled>
-          <capability-bits>34052144</capability-bits>
+          <capability-bits>2181535792</capability-bits>
           <export-type>3</export-type>
           <discovery-partition>
           </discovery-partition>
@@ -155,9 +142,10 @@
           <discovery-hierarchy>
           </discovery-hierarchy>
           <password-management-enabled>1</password-management-enabled>
-          <assembly-version>5.5.0.0</assembly-version>
+          <assembly-version>5.6.0.0</assembly-version>
+          <supports-parameters-ex>0</supports-parameters-ex>
         </extension-config>
-        <parameter-definitions refreshSchema="0" refreshPartition="0" refreshConnectivityParameters="0" refreshGlobalParameters="0" refreshOtherParameters="0">
+        <parameter-definitions refreshSchema="0" refreshPartition="0" refreshConnectivityParameters="0" refreshGlobalParameters="0" refreshOtherParameters="0" refreshSchemaParameters="0" refreshCapabilitiesParameters="0">
           <parameter>
             <name>
             </name>
@@ -177,7 +165,8 @@
             </validation>
             <text>
             </text>
-            <default-value>c:\psma\schema.ps1</default-value>
+            <default-value>
+            </default-value>
           </parameter>
           <parameter>
             <name>
@@ -215,6 +204,28 @@
           </parameter>
           <parameter>
             <name>Password</name>
+            <use>connectivity</use>
+            <type>encrypted-string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Username (auxiliary)</name>
+            <use>connectivity</use>
+            <type>string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Password (auxiliary)</name>
             <use>connectivity</use>
             <type>encrypted-string</type>
             <validation>
@@ -283,6 +294,40 @@
           <parameter>
             <name>
             </name>
+            <use>connectivity</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>Specify any additional configuration parameters to be passed to the Powershell scripts. Each values should be on seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Configuration parameters</name>
+            <use>connectivity</use>
+            <type>text</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
             <use>global</use>
             <type>label</type>
             <validation>
@@ -310,7 +355,8 @@
             </validation>
             <text>
             </text>
-            <default-value>c:\psma\import.ps1</default-value>
+            <default-value>
+            </default-value>
           </parameter>
           <parameter>
             <name>Export Script</name>
@@ -320,7 +366,8 @@
             </validation>
             <text>
             </text>
-            <default-value>c:\psma\export.ps1</default-value>
+            <default-value>
+            </default-value>
           </parameter>
           <parameter>
             <name>Use paged import</name>
@@ -363,7 +410,8 @@
             </validation>
             <text>
             </text>
-            <default-value>c:\psma\password.ps1</default-value>
+            <default-value>
+            </default-value>
           </parameter>
           <parameter>
             <name>
@@ -401,15 +449,11 @@
         </parameter-definitions>
         <parameter-values>
         </parameter-values>
-        <case_normalize_dn_for_anchor>1</case_normalize_dn_for_anchor>
         <default_visible_attributes>
-          <attribute>id</attribute>
-          <attribute>objectguidstring</attribute>
-          <attribute>objectsidstring</attribute>
-          <attribute>samaccountname</attribute>
-          <attribute>distinguishedname</attribute>
-          <attribute>homedrive</attribute>
-          <attribute>homedirectory</attribute>
+          <attribute>UserName</attribute>
+          <attribute>Department</attribute>
+          <attribute>FirstName</attribute>
+          <attribute>LastName</attribute>
         </default_visible_attributes>
       </MAConfig>
     </private-configuration>
@@ -418,7 +462,7 @@
     </ma-partition-data>
     <ma-run-data>
     </ma-run-data>
-    <capabilities-mask>207b831</capabilities-mask>
+    <capabilities-mask>82079831</capabilities-mask>
     <export-type>3</export-type>
     <dn-construction />
     <password-sync>
