@@ -64,13 +64,13 @@ namespace Granfeldt
 			try
 			{
 				Command cmd = new Command(Path.GetFullPath(ExportScript));
-				cmd.Parameters.Add(new CommandParameter("User", Username));
+				cmd.Parameters.Add(new CommandParameter("Username", Username));
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
 				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
 				
-				cmd.Parameters.Add(new CommandParameter("UsernameAux", UsernameAux));
-				cmd.Parameters.Add(new CommandParameter("PasswordAux", PasswordAux));
-				cmd.Parameters.Add(new CommandParameter("CredentialsAux", GetSecureCredentials(UsernameAux, SecureStringPasswordAux)));
+				cmd.Parameters.Add(new CommandParameter("AuxUsername", UsernameAux));
+				cmd.Parameters.Add(new CommandParameter("AuxPassword", PasswordAux));
+				cmd.Parameters.Add(new CommandParameter("AuxCredentials", GetSecureCredentials(UsernameAux, SecureStringPasswordAux)));
 
 				cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
 
