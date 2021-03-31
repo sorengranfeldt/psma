@@ -157,7 +157,7 @@ namespace Granfeldt
                     returnedCustomData = importRunStep.CustomData;
 
                     Command cmd = new Command(Path.GetFullPath(ImportScript));
-                    cmd.Parameters.Add(new CommandParameter("User", Username));
+                    cmd.Parameters.Add(new CommandParameter("Username", Username));
                     cmd.Parameters.Add(new CommandParameter("Password", Password));
                     cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
 

@@ -96,7 +96,9 @@
 //	- added support for configuration parameters
 //	- merged try/catch pull request (#18 Added a try catch to the resolving of group names)
 //	- upped version to 5.6.3.2021
-
+// march 31, 2021 | Darren J Robinson
+//	- fixed script parameter ($User => $Username)
+//	- fixed MA Type so PSMA can update historical MA's
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
 
 using Microsoft.MetadirectoryServices;
