@@ -32,6 +32,7 @@ The following are but some examples of users who have used the PSMA in order to 
 * [Azure B2B Automation](https://blog.darrenjrobinson.com/automating-azure-ad-b2b-guest-invitations-using-microsoft-identity-manager/)
 * [Azure B2B and Exchange Online Automation](https://github.com/puttyq/mim.psma.azureb2b)
 * [Hybrid Exchange Provisioning](https://blog.darrenjrobinson.com/provisioning-hybrid-exchangeexchange-online-mailboxes-with-microsoft-identity-manager/)
+* [Dynamics 365 Finance & Operations](https://blog.darrenjrobinson.com/a-dynamics-365-finance-operations-management-agent-for-microsoft-identity-manager/)
 * [xMatters Integration](https://blog.darrenjrobinson.com/building-a-fimmim-management-agent-for-xmatters/)
 * [Pwned Password Detection with MIM](https://blog.darrenjrobinson.com/updated-identifying-active-directory-users-with-pwned-passwords-using-microsoftforefront-identity-manager/)
 * [Office 365 Profile Photo Sync](https://blog.darrenjrobinson.com/how-to-synchronize-users-active-directoryazure-active-directory-photo-using-microsoft-identity-manager/)
