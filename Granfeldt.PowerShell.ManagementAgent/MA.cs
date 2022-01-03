@@ -99,6 +99,9 @@
 // march 31, 2021 | Darren J Robinson
 //	- fixed script parameter ($User => $Username)
 //	- fixed MA Type so PSMA can update historical MA's
+// january 3, 2022 | Benoit Boudeville
+//	- added ImportOnly/ExportOnly specifiers for schema attributes
+//	- upped to 5.6.4.2022
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
 
 using Microsoft.MetadirectoryServices;
