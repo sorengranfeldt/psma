@@ -20,6 +20,8 @@ namespace Granfeldt
 			public AttributeType Type { get; set; }
 			public bool IsMultiValue { get; set; }
 			public bool IsAnchor { get; set; }
+			public bool ImportOnly { get; set; }
+			public bool ExportOnly { get; set; }
 		}
 
 		Schema IMAExtensible2GetSchema.GetSchema(KeyedCollection<string, ConfigParameter> configParameters)
@@ -67,7 +69,11 @@ namespace Granfeldt
 							{
 								AttributeDefinition ad = new AttributeDefinition();
 								ad.Name = Regex.Replace(attrName, "^Anchor-", "", RegexOptions.IgnoreCase);
+								ad.Name = Regex.Replace(ad.Name, "^ImportOnly-", "", RegexOptions.IgnoreCase);
+								ad.Name = Regex.Replace(ad.Name, "^ExportOnly-", "", RegexOptions.IgnoreCase);
 								ad.IsAnchor = p.Name.StartsWith("anchor-", StringComparison.OrdinalIgnoreCase);
+								ad.ImportOnly = p.Name.StartsWith("importonly-", StringComparison.OrdinalIgnoreCase);
+								ad.ExportOnly = p.Name.StartsWith("exportonly-", StringComparison.OrdinalIgnoreCase);
 								ad.IsMultiValue = p.Name.EndsWith("[]", StringComparison.OrdinalIgnoreCase);
 								switch (attrType.Replace("[]", "").ToLower())
 								{
@@ -90,7 +96,7 @@ namespace Granfeldt
 										ad.Type = AttributeType.String;
 										break;
 								}
-								Tracer.TraceInformation("name '{0}', isanchor: {1}, ismultivalue: {2}, type: {3}", ad.Name, ad.IsAnchor, ad.IsMultiValue, ad.Type.ToString());
+								Tracer.TraceInformation("name '{0}', isanchor: {1}, ismultivalue: {2}, importonly: {3}, exportonly: {4}, type: {5}", ad.Name, ad.IsAnchor, ad.IsMultiValue, ad.ImportOnly, ad.ExportOnly, ad.Type.ToString());
 								attrs.Add(ad);
 							}
 						}
@@ -109,13 +115,16 @@ namespace Granfeldt
 							}
 							else
 							{
+								var attrOperation = def.ExportOnly ? AttributeOperation.ExportOnly :
+													def.ImportOnly ? AttributeOperation.ImportOnly : AttributeOperation.ImportExport;
+
 								if (def.IsMultiValue)
 								{
-									objectClass.Attributes.Add(SchemaAttribute.CreateMultiValuedAttribute(def.Name, def.Type));
+									objectClass.Attributes.Add(SchemaAttribute.CreateMultiValuedAttribute(def.Name, def.Type, attrOperation));
 								}
 								else
 								{
-									objectClass.Attributes.Add(SchemaAttribute.CreateSingleValuedAttribute(def.Name, def.Type));
+									objectClass.Attributes.Add(SchemaAttribute.CreateSingleValuedAttribute(def.Name, def.Type, attrOperation));
 								}
 							}
 						}
