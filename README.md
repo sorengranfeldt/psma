@@ -1,5 +1,5 @@
 # PowerShell Management Agent for FIM2010 and MIM2016
-The Granfeldt PowerShell Management Agent (PSMA) is a highly flexible ECMA for Forefront Identity Manager 2010 (FIM) R2 and Microsoft Identity Manager 2016. Although the MA can be deployed to perform many different user cases, the basic operation centres around creation, deletion, update or deletion (CRUD) that can be achieved via PowerShell. By using this framework, these operations can be triggered within FIM/MIM Synchronization Engine, thereby greatly extending the integration possibilities of the platform while simultaneously lowering the complexity of supporting the solution in the future.
+The Granfeldt PowerShell Management Agent (PSMA) is a highly flexible ECMA for Forefront Identity Manager 2010 (FIM) R2 and Microsoft Identity Manager 2016. Although the MA can be deployed to perform many different use cases, the basic operation centers around creation, updating, or deletion (CRUD), which can be achieved via PowerShell. By using this framework, these operations can be triggered within the FIM/MIM Synchronization Engine, thereby greatly extending the integration possibilities of the platform while simultaneously reducing the complexity of supporting the solution in the future.
 
 The management agent supports
 * [Full and Delta Import](https://github.com/sorengranfeldt/psma/wiki/Import)
