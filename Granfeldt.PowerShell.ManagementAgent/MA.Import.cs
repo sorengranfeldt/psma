@@ -26,18 +26,13 @@ namespace Granfeldt
         object pageToken;
         bool UsePagedImport = false;
         string ImportScript = null;
+        int ImportPageNumber = 0;
 
         List<PSObject> importResults;
         List<CSEntryChange> csentryqueue = new List<CSEntryChange>();
 
-        public int ImportDefaultPageSize
-        {
-            get { return 100; }
-        }
-        public int ImportMaxPageSize
-        {
-            get { return 10000; }
-        }
+        public int ImportDefaultPageSize => 100;
+        public int ImportMaxPageSize => 10000;
 
         Schema schema;
         PSObject schemaPSObject;
@@ -151,6 +146,7 @@ namespace Granfeldt
 
                 if (MoreToImport)
                 {
+                    ImportPageNumber++;
                     MoreToImport = false; // make sure we set more-to-import to false; could be overwritten further down if pagedimports is true, though
 
                     // on first call, we set customdata to value from last successful run
@@ -170,6 +166,7 @@ namespace Granfeldt
                     cmd.Parameters.Add(new CommandParameter("OperationType", importOperationType.ToString()));
                     cmd.Parameters.Add(new CommandParameter("UsePagedImport", UsePagedImport));
                     cmd.Parameters.Add(new CommandParameter("PageSize", ImportRunStepPageSize));
+                    cmd.Parameters.Add(new CommandParameter("ImportPageNumber", ImportPageNumber));
                     cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
 
                     Tracer.TraceInformation("setting-custom-data '{0}'", importRunStep.CustomData);
@@ -188,7 +185,6 @@ namespace Granfeldt
 
                     if (UsePagedImport)
                     {
-                        // Tracer.TraceError("paged-import-not-supported-currently");
                         object moreToImportObject = powershell.Runspace.SessionStateProxy.GetVariable("MoreToImport");
                         if (moreToImportObject == null)
                         {
