@@ -1,5 +1,7 @@
 ﻿// july 5, 2018, soren granfeldt
 //  - added schema psobject as parameter to export script
+// march 27, 2024 | soren granfeldt
+//	- increased max export pagesize from 500 to 9999
 
 using Microsoft.MetadirectoryServices;
 using System;
@@ -14,7 +16,6 @@ using System.Text.RegularExpressions;
 
 namespace Granfeldt
 {
-
 	public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
 	{
 		int exportBatchSize;
@@ -23,15 +24,9 @@ namespace Granfeldt
 		OperationType exportType;
 		Collection<PSObject> exportResults;
 
-		int IMAExtensible2CallExport.ExportDefaultPageSize
-		{
-			get { return 100; }
-		}
-		int IMAExtensible2CallExport.ExportMaxPageSize
-		{
-			get { return 500; }
-		}
-		void IMAExtensible2CallExport.OpenExportConnection(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, Schema types, OpenExportConnectionRunStep exportRunStep)
+        int IMAExtensible2CallExport.ExportDefaultPageSize => 100;
+        int IMAExtensible2CallExport.ExportMaxPageSize => 9999;
+        void IMAExtensible2CallExport.OpenExportConnection(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, Schema types, OpenExportConnectionRunStep exportRunStep)
 		{
 			Tracer.Enter("openexportconnection");
 			try
