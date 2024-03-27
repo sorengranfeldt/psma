@@ -23,6 +23,7 @@ namespace Granfeldt
 		string ExportScript = null;
 		OperationType exportType;
 		Collection<PSObject> exportResults;
+		int ExportPageNumber = 0;
 
         int IMAExtensible2CallExport.ExportDefaultPageSize => 100;
         int IMAExtensible2CallExport.ExportMaxPageSize => 9999;
@@ -40,6 +41,8 @@ namespace Granfeldt
 				Tracer.TraceInformation("export-type '{0}'", exportType);
 				exportBatchSize = exportRunStep.BatchSize;
 				Tracer.TraceInformation("export-batch-size '{0}'", exportBatchSize);
+
+				ExportPageNumber = 0;
 			}
 			catch (Exception ex)
 			{
@@ -58,6 +61,8 @@ namespace Granfeldt
 			PSDataCollection<PSObject> exportPipeline = new PSDataCollection<PSObject>();
 			try
 			{
+				ExportPageNumber++;
+
 				Command cmd = new Command(Path.GetFullPath(ExportScript));
 				cmd.Parameters.Add(new CommandParameter("Username", Username));
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
@@ -71,6 +76,7 @@ namespace Granfeldt
 
 				cmd.Parameters.Add(new CommandParameter("ExportType", exportType));
                 cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
+                cmd.Parameters.Add(new CommandParameter("ExportPageNumber", ExportPageNumber));
 
                 foreach (CSEntryChange csentryChange in csentries)
 				{

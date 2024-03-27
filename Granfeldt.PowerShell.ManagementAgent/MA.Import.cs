@@ -110,6 +110,7 @@ namespace Granfeldt
                 Tracer.TraceInformation("resetting-pipeline-results-and-counters");
                 importResults = new List<PSObject>();
                 pageToken = "";
+                ImportPageNumber = 0;
 
                 OpenImportConnectionResults oicr = new OpenImportConnectionResults();
                 ImportRunStepPageSize = openImportRunStep.PageSize;
