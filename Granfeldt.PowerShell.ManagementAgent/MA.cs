@@ -110,13 +110,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Management.Automation;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 
 namespace Granfeldt
 {
-	static class Constants
+    static class Constants
 	{
 		public static class Parameters
 		{
