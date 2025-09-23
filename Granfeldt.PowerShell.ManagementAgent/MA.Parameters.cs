@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace Granfeldt
 {
@@ -31,6 +30,11 @@ namespace Granfeldt
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationDomain, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationUsername, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateEncryptedStringParameter(Constants.Parameters.ImpersonationPassword, ""));
+
+                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
+                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell Engine Configuration: Select which PowerShell engine to use for script execution."));
+                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateDropDownParameter(Constants.Parameters.PowerShellVersion, "Windows PowerShell 5.1,PowerShell 7", false, "Windows PowerShell 5.1"));
+                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.PowerShell7ExecutablePath, ""));
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("Specify any additional configuration parameters to be passed to the Powershell scripts. Each value should be on a seperate line and key and value seperated by a comma or equal sign (i.e. Environment=PROD)"));
@@ -79,6 +83,25 @@ namespace Granfeldt
                     {
                         return new ParameterValidationResult(ParameterValidationResultCode.Failure, string.Format("Can not find or access Schema script '{0}'. Please make sure that the FIM Synchronization Service service account can read and access this file.", schemaScriptFilename), Constants.Parameters.SchemaScript);
                     }
+                    
+                    // Validate PowerShell 7 path if selected
+                    if (configParameters.Contains(Constants.Parameters.PowerShellVersion) &&
+                        configParameters[Constants.Parameters.PowerShellVersion]?.Value == "PowerShell 7")
+                    {
+                        if (!configParameters.Contains(Constants.Parameters.PowerShell7ExecutablePath) ||
+                            string.IsNullOrWhiteSpace(configParameters[Constants.Parameters.PowerShell7ExecutablePath]?.Value))
+                        {
+                            return new ParameterValidationResult(ParameterValidationResultCode.Failure, 
+                                "PowerShell 7 Executable Path is required when PowerShell 7 is selected.", 
+                                Constants.Parameters.PowerShell7ExecutablePath);
+                        }
+                        
+                        string powershell7ExecutableFilename = Path.GetFullPath(configParameters[Constants.Parameters.PowerShell7ExecutablePath].Value);
+                        if (!File.Exists(powershell7ExecutableFilename))
+                        {
+                            return new ParameterValidationResult(ParameterValidationResultCode.Failure, string.Format("Can not find or access PowerShell 7 executable '{0}'. Please make sure that the FIM Synchronization Service service account can read and access this file.", powershell7ExecutableFilename), Constants.Parameters.PowerShell7ExecutablePath);
+                        }
+                    }
                 }
                 if (page == ConfigParameterPage.Global)
                 {
@@ -115,11 +138,27 @@ namespace Granfeldt
             Tracer.Enter("initializeconfigparameters");
             try
             {
+                Tracer.TraceInformation("*** ENHANCED PARAMETER DEBUGGING ***");
+                Tracer.TraceInformation("config-parameters-collection-null: {0}", configParameters == null);
                 if (configParameters != null)
                 {
+                    Tracer.TraceInformation("config-parameters-count: {0}", configParameters.Count);
+                    
                     foreach (ConfigParameter cp in configParameters)
                     {
                         Tracer.TraceInformation("{0}: '{1}'", cp.Name, cp.IsEncrypted ? "*** secret ***" : cp.Value);
+                        
+                        // Enhanced PowerShell Version debugging
+                        if (cp.Name.Equals(Constants.Parameters.PowerShellVersion))
+                        {
+                            Tracer.TraceInformation("*** FOUND POWERSHELL VERSION PARAMETER ***");
+                            Tracer.TraceInformation("powershell-version-parameter-name: '{0}'", cp.Name);
+                            Tracer.TraceInformation("powershell-version-parameter-value: '{0}'", cp.Value ?? "(null)");
+                            Tracer.TraceInformation("powershell-version-constants-value: '{0}'", Constants.Parameters.PowerShellVersion);
+                            PowerShellVersion = configParameters[cp.Name].Value;
+                            Tracer.TraceInformation("powershell-version-assigned: '{0}'", PowerShellVersion ?? "(null)");
+                        }
+                        
                         if (cp.Name.Equals(Constants.Parameters.Username)) Username = configParameters[cp.Name].Value;
                         if (cp.Name.Equals(Constants.Parameters.Password))
                         {
@@ -135,7 +174,9 @@ namespace Granfeldt
                         }
                         if (cp.Name.Equals(Constants.Parameters.ConfigurationParameters))
                         {
-                            string[] result = Regex.Split(configParameters[cp.Name].Value, "\r\n|\r|\n");
+                            // Split on newlines without using regex to avoid issues with file paths containing backslashes
+                            string configValue = configParameters[cp.Name].Value ?? string.Empty;
+                            string[] result = configValue.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                             if (result != null)
                             {
                                 foreach (string s in result)
@@ -168,8 +209,24 @@ namespace Granfeldt
                         if (cp.Name.Equals(Constants.Parameters.PasswordManagementScript)) PasswordManagementScript = configParameters[cp.Name].Value;
                         if (cp.Name.Equals(Constants.Parameters.ExportSimpleObjects)) ExportSimpleObjects = configParameters[cp.Name].Value == "0" ? false : true;
                         if (cp.Name.Equals(Constants.Parameters.UsePagedImport)) UsePagedImport = configParameters[cp.Name].Value == "0" ? false : true;
+                        if (cp.Name.Equals(Constants.Parameters.PowerShellVersion)) PowerShellVersion = configParameters[cp.Name].Value;
+                        if (cp.Name.Equals(Constants.Parameters.PowerShell7ExecutablePath)) PowerShell7ExecutablePath = configParameters[cp.Name].Value;
                     }
                 }
+
+                // Set default values if not provided
+                if (string.IsNullOrEmpty(PowerShellVersion))
+                {
+                    PowerShellVersion = "Windows PowerShell 5.1";
+                }
+                if (string.IsNullOrEmpty(PowerShell7ExecutablePath))
+                {
+                    // Use forward slashes initially to avoid regex issues, will be normalized by Path.GetFullPath later
+                    PowerShell7ExecutablePath = "C:/Program Files/PowerShell/7/pwsh.exe";
+                }
+
+                Tracer.TraceInformation("powershell-version: '{0}'", PowerShellVersion);
+                Tracer.TraceInformation("powershell7-executable-path: '{0}'", PowerShell7ExecutablePath);
             }
             catch (Exception ex)
             {
@@ -184,16 +241,47 @@ namespace Granfeldt
 
         bool getConfigurationParameter(string input, out string key, out string value)
         {
-            string[] result = Regex.Split(input, @"\,|\=");
-            key = result.Length > 0 ? result[0] : null;
+            key = null;
             value = null;
-            if (!string.IsNullOrWhiteSpace(key))
+            
+            if (string.IsNullOrWhiteSpace(input))
             {
-                value = Regex.Replace(input, $"^{key}(\\,|\\=|)", "");
-                key = key?.Trim();
-                return true;
+                return false;
             }
-            return false;
+
+            // Find the first occurrence of = or , 
+            int separatorIndex = -1;
+            
+            int equalsIndex = input.IndexOf('=');
+            int commaIndex = input.IndexOf(',');
+            
+            if (equalsIndex >= 0 && (commaIndex < 0 || equalsIndex < commaIndex))
+            {
+                separatorIndex = equalsIndex;
+            }
+            else if (commaIndex >= 0)
+            {
+                separatorIndex = commaIndex;
+            }
+            
+            if (separatorIndex > 0)
+            {
+                key = input.Substring(0, separatorIndex).Trim();
+                if (separatorIndex + 1 < input.Length)
+                {
+                    value = input.Substring(separatorIndex + 1);
+                }
+                else
+                {
+                    value = string.Empty;
+                }
+                return !string.IsNullOrWhiteSpace(key);
+            }
+            
+            // If no separator found, treat the entire input as the key
+            key = input.Trim();
+            value = string.Empty;
+            return !string.IsNullOrWhiteSpace(key);
         }
     }
 

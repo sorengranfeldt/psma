@@ -171,14 +171,14 @@ namespace Granfeldt
                     cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
 
                     Tracer.TraceInformation("setting-custom-data '{0}'", importRunStep.CustomData);
-                    powershell.Runspace.SessionStateProxy.SetVariable("RunStepCustomData", importRunStep.CustomData);
+                    SetPowerShellVariable("RunStepCustomData", importRunStep.CustomData);
                     Tracer.TraceInformation("setting-page-token '{0}'", pageToken);
-                    powershell.Runspace.SessionStateProxy.SetVariable("PageToken", pageToken);
+                    SetPowerShellVariable("PageToken", pageToken);
 
                     importResults = InvokePowerShellScript(cmd, null).ToList<PSObject>();
 
-                    returnedCustomData = powershell.Runspace.SessionStateProxy.GetVariable("RunStepCustomData");
-                    pageToken = powershell.Runspace.SessionStateProxy.GetVariable("PageToken");
+                    returnedCustomData = GetPowerShellVariable("RunStepCustomData");
+                    pageToken = GetPowerShellVariable("PageToken");
 
                     Tracer.TraceInformation("page-token-returned '{0}'", pageToken == null ? "(null)" : pageToken);
                     Tracer.TraceInformation("custom-data returned '{0}'", returnedCustomData);
@@ -186,7 +186,7 @@ namespace Granfeldt
 
                     if (UsePagedImport)
                     {
-                        object moreToImportObject = powershell.Runspace.SessionStateProxy.GetVariable("MoreToImport");
+                        object moreToImportObject = GetPowerShellVariable("MoreToImport");
                         if (moreToImportObject == null)
                         {
                             Tracer.TraceError("For paged imports, the global variable 'MoreToImport' must be set to 'true' or 'false'");
@@ -504,7 +504,18 @@ namespace Granfeldt
             Tracer.Enter("closeimportconnectionresults");
             try
             {
-                CloseRunspace();
+                try
+                {
+                    CloseRunspace();
+                }
+                catch (AppDomainUnloadedException)
+                {
+                    // AppDomain is unloading, ignore runspace cleanup
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceWarning("closeimport-runspace-cleanup-error", 1, ex.Message);
+                }
 
                 CloseImportConnectionResults cicr = new CloseImportConnectionResults();
                 Tracer.TraceInformation("custom-data {0}", importRunStep.CustomData);
@@ -513,8 +524,26 @@ namespace Granfeldt
                 {
                     cicr.CustomData = importRunStep.CustomData;
                 }
-                Dispose();
+                
+                try
+                {
+                    Dispose();
+                }
+                catch (AppDomainUnloadedException)
+                {
+                    // AppDomain is unloading, ignore disposal
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceWarning("closeimport-dispose-error", 1, ex.Message);
+                }
+                
                 return cicr;
+            }
+            catch (AppDomainUnloadedException)
+            {
+                // AppDomain is unloading, return minimal results
+                return new CloseImportConnectionResults();
             }
             catch (Exception ex)
             {

@@ -212,8 +212,35 @@ namespace Granfeldt
 			Tracer.Enter("closeexportconnection");
 			try
 			{
-				CloseRunspace();
-				Dispose();
+				try
+				{
+					CloseRunspace();
+				}
+				catch (AppDomainUnloadedException)
+				{
+					// AppDomain is unloading, ignore runspace cleanup
+				}
+				catch (Exception ex)
+				{
+					Tracer.TraceWarning("closeexport-runspace-cleanup-error", 1, ex.Message);
+				}
+				
+				try
+				{
+					Dispose();
+				}
+				catch (AppDomainUnloadedException)
+				{
+					// AppDomain is unloading, ignore disposal
+				}
+				catch (Exception ex)
+				{
+					Tracer.TraceWarning("closeexport-dispose-error", 1, ex.Message);
+				}
+			}
+			catch (AppDomainUnloadedException)
+			{
+				// AppDomain is unloading, allow graceful exit
 			}
 			catch (Exception ex)
 			{

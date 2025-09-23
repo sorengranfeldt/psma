@@ -54,7 +54,8 @@ namespace Granfeldt
 
                 cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
 
-                schemaResults = InvokePowerShellScript(cmd, null);
+                // Schema operations should always use Windows PowerShell 5.1 for backwards compatibility
+                schemaResults = InvokePowerShellScript(cmd, null, allowPowerShell7: false);
                 CloseRunspace();
 
                 if (schemaResults != null)
