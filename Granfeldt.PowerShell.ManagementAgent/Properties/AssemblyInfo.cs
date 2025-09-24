@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Goverco")]
 [assembly: AssemblyProduct("PowerShell Management Agent")]
-[assembly: AssemblyCopyright("Copyright © Soren Granfeldt 2011-2024")]
+[assembly: AssemblyCopyright("Copyright © Soren Granfeldt 2011-2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -38,5 +38,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("6.0")]
-[assembly: AssemblyFileVersion("6.0.0916.2025")]
+[assembly: AssemblyFileVersion("6.0.0924.2025")]
 [assembly: AssemblyInformationalVersion("6.0")]
