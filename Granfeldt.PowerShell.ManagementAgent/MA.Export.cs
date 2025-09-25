@@ -19,8 +19,6 @@ namespace Granfeldt
 	public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
 	{
 		int exportBatchSize;
-		bool ExportSimpleObjects = true;
-		string ExportScript = null;
 		OperationType exportType;
 		Collection<PSObject> exportResults;
 		int ExportPageNumber = 0;
@@ -63,7 +61,7 @@ namespace Granfeldt
 			{
 				ExportPageNumber++;
 
-				Command cmd = new Command(Path.GetFullPath(ExportScript));
+				Command cmd = new Command(Path.GetFullPath(exportScriptPath));
 				cmd.Parameters.Add(new CommandParameter("Username", Username));
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
 				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
@@ -81,7 +79,7 @@ namespace Granfeldt
                 foreach (CSEntryChange csentryChange in csentries)
 				{
 					Tracer.TraceInformation("adding-object id: {0}, dn: '{1}' [{2}]", csentryChange.Identifier, csentryChange.DN, csentryChange.ObjectModificationType);
-					if (ExportSimpleObjects)
+					if (exportSimpleObjects)
 					{
 						// http://karlprosser.com/coder/2008/06/12/generating-a-propertybag-aka-pscustomobject-in-c/
 						// creating a PSobject without any parameters in the constructor creates a PSCustomObject

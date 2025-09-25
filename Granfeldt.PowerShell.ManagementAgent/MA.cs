@@ -181,6 +181,16 @@ namespace Granfeldt
 
 		Dictionary<string, string> ConfigurationParameter = new Dictionary<string, string>();
 
+		// Script file paths
+		string schemaScriptPath = null;
+		string importScriptPath = null;
+		string exportScriptPath = null;
+		string passwordManagementScriptPath = null;
+
+		// Script execution options
+		bool usePagedImport = false;
+		bool exportSimpleObjects = true;
+
 		string PowerShellVersion = "Windows PowerShell 5.1"; // Default to Windows PowerShell 5.1
 		string PowerShell7ExecutablePath = @"C:\Program Files\PowerShell\7\pwsh.exe"; // Default PowerShell 7 path
 
@@ -215,7 +225,7 @@ namespace Granfeldt
 								 * Throwing the exception kills the run profile, where the membership might be totally
 								 * irrelevant. We do log the SID for diagnostic purpose.
 								 */
-								Tracer.TraceError($"error-resolving-current-group-name: {group.Value}", ex);
+								Tracer.TraceError("error-resolving-current-group-name: " + group.Value, ex);
 							}
 						}
 					}

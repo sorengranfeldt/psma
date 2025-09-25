@@ -185,10 +185,10 @@ namespace Granfeldt
                                     string value = null;
                                     if (getConfigurationParameter(s, out key, out value))
                                     {
-                                        Tracer.TraceInformation($"configuration-parameter key: '{key}', value: '{value}'");
+                                        Tracer.TraceInformation("configuration-parameter key: '{0}', value: '{1}'", key, value);
                                         if (ConfigurationParameter.ContainsKey(key))
                                         {
-                                            Tracer.TraceWarning($"duplicate-configuration key: {key}");
+                                            Tracer.TraceWarning("duplicate-configuration key: {0}", 1, key);
                                         }
                                         else
                                         {
@@ -203,14 +203,29 @@ namespace Granfeldt
                         if (cp.Name.Equals(Constants.Parameters.ImpersonationUsername)) impersonationUsername = configParameters[cp.Name].Value;
                         if (cp.Name.Equals(Constants.Parameters.ImpersonationPassword)) impersonationUserPassword = configParameters[cp.Name].SecureValue.ConvertToUnsecureString();
 
-                        if (cp.Name.Equals(Constants.Parameters.SchemaScript)) SchemaScript = configParameters[cp.Name].Value;
-                        if (cp.Name.Equals(Constants.Parameters.ImportScript)) ImportScript = configParameters[cp.Name].Value;
-                        if (cp.Name.Equals(Constants.Parameters.ExportScript)) ExportScript = configParameters[cp.Name].Value;
-                        if (cp.Name.Equals(Constants.Parameters.PasswordManagementScript)) PasswordManagementScript = configParameters[cp.Name].Value;
-                        if (cp.Name.Equals(Constants.Parameters.ExportSimpleObjects)) ExportSimpleObjects = configParameters[cp.Name].Value == "0" ? false : true;
-                        if (cp.Name.Equals(Constants.Parameters.UsePagedImport)) UsePagedImport = configParameters[cp.Name].Value == "0" ? false : true;
-                        if (cp.Name.Equals(Constants.Parameters.PowerShellVersion)) PowerShellVersion = configParameters[cp.Name].Value;
-                        if (cp.Name.Equals(Constants.Parameters.PowerShell7ExecutablePath)) PowerShell7ExecutablePath = configParameters[cp.Name].Value;
+                        if (cp.Name.Equals(Constants.Parameters.SchemaScript))
+                        {
+                            schemaScriptPath = configParameters[cp.Name].Value;
+                            Tracer.TraceInformation("schema-script-configured: '{0}'", schemaScriptPath ?? "(null)");
+                        }
+                        if (cp.Name.Equals(Constants.Parameters.ImportScript))
+                        {
+                            importScriptPath = configParameters[cp.Name].Value;
+                            Tracer.TraceInformation("import-script-configured: '{0}'", importScriptPath ?? "(null)");
+                        }
+                        if (cp.Name.Equals(Constants.Parameters.ExportScript))
+                        {
+                            exportScriptPath = configParameters[cp.Name].Value;
+                            Tracer.TraceInformation("export-script-configured: '{0}'", exportScriptPath ?? "(null)");
+                        }
+                        if (cp.Name.Equals(Constants.Parameters.PasswordManagementScript))
+                        {
+                            passwordManagementScriptPath = configParameters[cp.Name].Value;
+                            Tracer.TraceInformation("password-script-configured: '{0}'", passwordManagementScriptPath ?? "(null)");
+                        }
+                        if (cp.Name.Equals(Constants.Parameters.ExportSimpleObjects)) exportSimpleObjects = configParameters[cp.Name].Value == "0" ? false : true;
+                        if (cp.Name.Equals(Constants.Parameters.UsePagedImport)) usePagedImport = configParameters[cp.Name].Value == "0" ? false : true;
+                        // PowerShellVersion and PowerShell7ExecutablePath already processed in the enhanced debugging section above
                     }
                 }
 
@@ -227,6 +242,25 @@ namespace Granfeldt
 
                 Tracer.TraceInformation("powershell-version: '{0}'", PowerShellVersion);
                 Tracer.TraceInformation("powershell7-executable-path: '{0}'", PowerShell7ExecutablePath);
+                
+                // ENHANCED DEBUG: Detailed configuration validation
+                Tracer.TraceInformation("*** ENHANCED CONFIGURATION DEBUG ***");
+                Tracer.TraceInformation("powershell-version-is-null: {0}", PowerShellVersion == null);
+                Tracer.TraceInformation("powershell-version-contains-ps7: {0}", PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7"));
+                Tracer.TraceInformation("powershell7-path-exists: {0}", !string.IsNullOrEmpty(PowerShell7ExecutablePath) && System.IO.File.Exists(PowerShell7ExecutablePath));
+                if (!string.IsNullOrEmpty(PowerShell7ExecutablePath) && !System.IO.File.Exists(PowerShell7ExecutablePath))
+                {
+                    Tracer.TraceError("powershell7-executable-not-found-at-configured-path: '{0}'", PowerShell7ExecutablePath);
+                }
+                
+                // Log final configuration state
+                Tracer.TraceInformation("*** FINAL SCRIPT CONFIGURATION STATE ***");
+                Tracer.TraceInformation("schema-script-path: '{0}'", schemaScriptPath ?? "(null)");
+                Tracer.TraceInformation("import-script-path: '{0}'", importScriptPath ?? "(null)");
+                Tracer.TraceInformation("export-script-path: '{0}'", exportScriptPath ?? "(null)");
+                Tracer.TraceInformation("password-script-path: '{0}'", passwordManagementScriptPath ?? "(null)");
+                Tracer.TraceInformation("use-paged-import: {0}", usePagedImport);
+                Tracer.TraceInformation("export-simple-objects: {0}", exportSimpleObjects);
             }
             catch (Exception ex)
             {

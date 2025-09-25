@@ -24,8 +24,6 @@ namespace Granfeldt
         bool MoreToImport = true;
         object returnedCustomData = "";
         object pageToken;
-        bool UsePagedImport = false;
-        string ImportScript = null;
         int ImportPageNumber = 0;
 
         List<PSObject> importResults;
@@ -153,7 +151,7 @@ namespace Granfeldt
                     // on first call, we set customdata to value from last successful run
                     returnedCustomData = importRunStep.CustomData;
 
-                    Command cmd = new Command(Path.GetFullPath(ImportScript));
+                    Command cmd = new Command(Path.GetFullPath(importScriptPath));
                     cmd.Parameters.Add(new CommandParameter("Username", Username));
                     cmd.Parameters.Add(new CommandParameter("Password", Password));
                     cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
@@ -165,7 +163,7 @@ namespace Granfeldt
                     cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
 
                     cmd.Parameters.Add(new CommandParameter("OperationType", importOperationType.ToString()));
-                    cmd.Parameters.Add(new CommandParameter("UsePagedImport", UsePagedImport));
+                    cmd.Parameters.Add(new CommandParameter("UsePagedImport", usePagedImport));
                     cmd.Parameters.Add(new CommandParameter("PageSize", ImportRunStepPageSize));
                     cmd.Parameters.Add(new CommandParameter("ImportPageNumber", ImportPageNumber));
                     cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
@@ -184,7 +182,7 @@ namespace Granfeldt
                     Tracer.TraceInformation("custom-data returned '{0}'", returnedCustomData);
                     Tracer.TraceInformation("number-of-object(s)-in-pipeline {0:n0}", importResults.Count);
 
-                    if (UsePagedImport)
+                    if (usePagedImport)
                     {
                         object moreToImportObject = GetPowerShellVariable("MoreToImport");
                         if (moreToImportObject == null)

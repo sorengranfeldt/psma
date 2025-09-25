@@ -215,15 +215,24 @@ namespace Granfeldt
                             try
                             {
                                 string ps7Path = GetPowerShell7Path();
+                                Tracer.TraceInformation("*** ENHANCED POWERSHELL 7 ENGINE INITIALIZATION DEBUG ***");
                                 Tracer.TraceInformation("attempting-to-use-powershell7 path: '{0}'", ps7Path);
                                 Tracer.TraceInformation("powershell-version-setting: '{0}'", PowerShellVersion);
+                                Tracer.TraceInformation("powershell7-path-exists: {0}", System.IO.File.Exists(ps7Path));
+                                
+                                Tracer.TraceInformation("creating-powershell7-engine-via-factory");
                                 powerShellEngine = PowerShellEngineFactory.CreateEngine("PowerShell 7", ps7Path);
+                                Tracer.TraceInformation("powershell7-engine-created-successfully type: '{0}'", powerShellEngine.GetType().Name);
+                                
                                 powerShellEngine.PowerShellError += PowerShellEngine_Error;
                                 powerShellEngine.PowerShellVerbose += PowerShellEngine_Verbose;
                                 powerShellEngine.PowerShellWarning += PowerShellEngine_Warning;
                                 powerShellEngine.PowerShellDebug += PowerShellEngine_Debug;
                                 powerShellEngine.PowerShellProgress += PowerShellEngine_Progress;
+                                
+                                Tracer.TraceInformation("initializing-powershell7-engine");
                                 powerShellEngine.Initialize();
+                                Tracer.TraceInformation("powershell7-engine-initialized-successfully");
                                 
                                 // Set impersonation credentials for PowerShell 7+ out-of-process execution
                                 // Only set if we have valid credentials and we're not in configuration mode
@@ -265,11 +274,17 @@ namespace Granfeldt
                 }
 
                 // Use PowerShell 7+ engine if available and configured
+                Tracer.TraceInformation("*** ENHANCED ENGINE USAGE DEBUG ***");
+                Tracer.TraceInformation("powershell-engine-is-null: {0}", powerShellEngine == null);
+                Tracer.TraceInformation("should-use-powershell7-result: {0}", ShouldUsePowerShell7());
+                
                 if (powerShellEngine != null && ShouldUsePowerShell7())
                 {
                     try
                     {
-                        Tracer.TraceInformation("using-powershell7-engine for script execution (out-of-process, no impersonation setup needed)");
+                        Tracer.TraceInformation("*** USING POWERSHELL 7+ ENGINE FOR SCRIPT EXECUTION ***");
+                        Tracer.TraceInformation("engine-type: '{0}'", powerShellEngine.EngineType);
+                        Tracer.TraceInformation("engine-is-initialized: {0}", powerShellEngine.IsInitialized);
                         powerShellEngine.OpenRunspace();
                         return powerShellEngine.InvokePowerShellScript(command, pipelineInput);
                     }
@@ -313,6 +328,11 @@ namespace Granfeldt
                 }
                 
                 // Windows PowerShell 5.1 execution (either by choice or fallback)
+                Tracer.TraceInformation("*** WINDOWS POWERSHELL 5.1 EXECUTION DECISION ***");
+                Tracer.TraceInformation("powershell7-engine-is-null: {0}", powerShellEngine == null);
+                Tracer.TraceInformation("should-use-powershell7: {0}", ShouldUsePowerShell7());
+                Tracer.TraceInformation("reason-for-windows-ps: {0}", powerShellEngine == null ? "PowerShell 7 engine is null (initialization failed)" : "Configuration set to Windows PowerShell 5.1");
+                
                 if (powerShellEngine == null || !ShouldUsePowerShell7())
                 {
                     // Fall back to traditional Windows PowerShell 5.1 implementation
@@ -418,6 +438,18 @@ namespace Granfeldt
             // Check if PowerShell 7+ is configured
             bool shouldUse = PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7");
             Tracer.TraceInformation("should-use-powershell7: {0}, powershell-version-property: '{1}'", shouldUse, PowerShellVersion ?? "(null)");
+            
+            // ENHANCED DEBUG: Detailed engine selection analysis
+            Tracer.TraceInformation("*** ENHANCED ENGINE SELECTION DEBUG ***");
+            Tracer.TraceInformation("powershell-version-is-null: {0}", PowerShellVersion == null);
+            Tracer.TraceInformation("powershell-version-exact-value: '{0}'", PowerShellVersion ?? "<NULL>");
+            Tracer.TraceInformation("powershell-version-length: {0}", PowerShellVersion?.Length ?? -1);
+            if (PowerShellVersion != null)
+            {
+                Tracer.TraceInformation("powershell-version-contains-ps7-check: '{0}' contains 'PowerShell 7' = {1}", PowerShellVersion, PowerShellVersion.Contains("PowerShell 7"));
+                Tracer.TraceInformation("powershell-version-exact-match-check: '{0}' == 'PowerShell 7' = {1}", PowerShellVersion, PowerShellVersion == "PowerShell 7");
+            }
+            
             return shouldUse;
         }
 

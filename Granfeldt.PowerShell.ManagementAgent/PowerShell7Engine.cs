@@ -88,8 +88,12 @@ namespace Granfeldt
                     Tracer.TraceError("impersonation-credential-validation-failed-for-powershell7: {0}", ex.Message);
                     
                     // Determine if this is a credential issue or a platform limitation
-                    string platformInfo = System.Environment.OSVersion.VersionString;
-                    bool isServer2012R2 = platformInfo.Contains("6.3") || platformInfo.Contains("2012");
+                    // Fix: Properly detect Windows Server 2012 R2 (version 6.3) vs newer versions
+                    Version osVersion = System.Environment.OSVersion.Version;
+                    bool isServer2012R2 = osVersion.Major == 6 && osVersion.Minor == 3;
+                    
+                    Tracer.TraceInformation("os-version-detection major: {0}, minor: {1}, build: {2}, is-server2012r2: {3}", 
+                        osVersion.Major, osVersion.Minor, osVersion.Build, isServer2012R2);
                     
                     string errorMessage = isServer2012R2 
                         ? $"PowerShell 7+ impersonation is not supported on Windows Server 2012 R2 due to platform limitations. Credential validation failed: {ex.Message}. Please use Windows PowerShell 5.1 for operations requiring impersonation, or configure PowerShell 7+ to run without impersonation (as the synchronization service account)."
@@ -215,7 +219,7 @@ namespace Granfeldt
                 using (var process = new Process())
                 {
                     process.StartInfo.FileName = powerShell7ExecutablePath;
-                    process.StartInfo.Arguments = "-NoProfile -NonInteractive -Command \"$PSVersionTable.PSVersion.ToString(); $PSVersionTable.PSEdition\"";
+                    process.StartInfo.Arguments = "-NoProfile -NonInteractive -Command \"Write-Output $PSVersionTable.PSVersion; Write-Output $PSVersionTable.PSEdition\"";
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
@@ -363,6 +367,7 @@ namespace Granfeldt
         private Collection<PSObject> ExecutePowerShellFile(string scriptPath, CommandParameterCollection parameters, PSDataCollection<PSObject> pipelineInput)
         {
             Collection<PSObject> results = new Collection<PSObject>();
+            string tempWrapperScript = null;
             
             try
             {
@@ -375,14 +380,30 @@ namespace Granfeldt
                 Tracer.TraceInformation("powershell7-executing-script-file: {0}", scriptPath);
                 Tracer.TraceInformation("powershell7-script-parameters-count: {0}", parameters?.Count ?? 0);
                 
-                // Execute PowerShell 7+ process with the script file
-                using (var process = new Process())
-                {
-                    process.StartInfo.FileName = powerShell7ExecutablePath;
+                // Create wrapper script that sets engine identification variables
+                tempWrapperScript = Path.Combine(Path.GetTempPath(), $"PSMA_PS7_Wrapper_{Guid.NewGuid()}.ps1");
+                
+                var wrapperContent = new StringBuilder();
+                    wrapperContent.AppendLine("# PSMA PowerShell 7 Engine Wrapper Script");
+                    wrapperContent.AppendLine("# Set global variables to identify PowerShell 7 engine execution");
+                    wrapperContent.AppendLine("$global:PSMA_ENGINE = 'PowerShell7Engine'");
+                    wrapperContent.AppendLine("$global:PS7ENGINE = $true");
+                    wrapperContent.AppendLine("$global:PSMA_OUT_OF_PROCESS = $true");
+                    wrapperContent.AppendLine("");
+                    wrapperContent.AppendLine($"# Execute the actual script: {scriptPath}");
+                    wrapperContent.AppendLine($". \"{scriptPath}\"");
                     
-                    // Build arguments: script path + parameters
-                    var argumentsBuilder = new StringBuilder();
-                    argumentsBuilder.Append($"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\"");
+                    File.WriteAllText(tempWrapperScript, wrapperContent.ToString());
+                    Tracer.TraceInformation("powershell7-created-wrapper-script: {0}", tempWrapperScript);
+                
+                    // Execute PowerShell 7+ process with the wrapper script
+                    using (var process = new Process())
+                    {
+                        process.StartInfo.FileName = powerShell7ExecutablePath;
+                        
+                        // Build arguments: wrapper script path + parameters
+                        var argumentsBuilder = new StringBuilder();
+                        argumentsBuilder.Append($"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempWrapperScript}\"");
                     
                     // Add parameters if any
                     if (parameters != null && parameters.Count > 0)
@@ -470,6 +491,16 @@ namespace Granfeldt
                     Tracer.TraceInformation("working-directory: {0}", process.StartInfo.WorkingDirectory);
                     Tracer.TraceInformation("impersonation-configured: {0}", impersonationConfigured);
                     
+                    // ENHANCED DEBUG: Log complete process configuration
+                    Tracer.TraceInformation("*** ENHANCED POWERSHELL 7 PROCESS DEBUG ***");
+                    Tracer.TraceInformation("process-filename: '{0}'", process.StartInfo.FileName);
+                    Tracer.TraceInformation("process-arguments: '{0}'", process.StartInfo.Arguments);
+                    Tracer.TraceInformation("script-file-exists: {0}", File.Exists(scriptPath));
+                    Tracer.TraceInformation("script-file-size: {0} bytes", new FileInfo(scriptPath).Length);
+                    Tracer.TraceInformation("use-shell-execute: {0}", process.StartInfo.UseShellExecute);
+                    Tracer.TraceInformation("redirect-stdout: {0}", process.StartInfo.RedirectStandardOutput);
+                    Tracer.TraceInformation("redirect-stderr: {0}", process.StartInfo.RedirectStandardError);
+                    
                     try
                     {
                         Tracer.TraceInformation("starting-powershell7-process-with-enhanced-error-handling");
@@ -491,6 +522,17 @@ namespace Granfeldt
                         
                         Tracer.TraceInformation("powershell7-process-exit-code: {0}", process.ExitCode);
                         Tracer.TraceInformation("powershell7-process-output-length: {0} chars", output?.Length ?? 0);
+                        
+                        // ENHANCED DEBUG: Log actual output content
+                        if (!string.IsNullOrEmpty(output))
+                        {
+                            Tracer.TraceInformation("*** POWERSHELL 7 PROCESS OUTPUT CONTENT ***");
+                            string[] outputLines = output.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                            for (int i = 0; i < Math.Min(10, outputLines.Length); i++)
+                            {
+                                Tracer.TraceInformation("output-line-{0}: '{1}'", i + 1, outputLines[i]);
+                            }
+                        }
                         
                         if (!string.IsNullOrEmpty(error))
                         {
@@ -572,6 +614,22 @@ namespace Granfeldt
             {
                 Tracer.TraceError("ExecutePowerShellFile-error: {0}", ex.Message);
                 throw new InvalidOperationException($"Unexpected error during PowerShell 7+ execution: {ex.Message}", ex);
+            }
+            finally
+            {
+                // Clean up the temporary wrapper script
+                if (File.Exists(tempWrapperScript))
+                {
+                    try
+                    {
+                        File.Delete(tempWrapperScript);
+                        Tracer.TraceInformation("powershell7-deleted-wrapper-script: {0}", tempWrapperScript);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Tracer.TraceWarning("powershell7-failed-to-delete-wrapper-script: {0} - {1}", 1, tempWrapperScript, cleanupEx.Message);
+                    }
+                }
             }
             
             return results;

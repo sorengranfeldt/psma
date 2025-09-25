@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text.RegularExpressions;
@@ -12,7 +13,6 @@ namespace Granfeldt
     public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
     {
         Collection<PSObject> schemaResults;
-        string SchemaScript = null;
 
         class AttributeDefinition
         {
@@ -42,8 +42,23 @@ namespace Granfeldt
                 Schema schema = Schema.Create();
                 InitializeConfigParameters(configParameters);
 
+                // Validate schema script path is configured
+                if (string.IsNullOrEmpty(schemaScriptPath))
+                {
+                    Tracer.TraceError("schema-script-path-not-configured");
+                    throw new InvalidOperationException("Schema script path is not configured. Please configure the 'Schema Script' parameter in the management agent configuration.");
+                }
+
+                // Validate schema script file exists
+                if (!File.Exists(schemaScriptPath))
+                {
+                    Tracer.TraceError("schema-script-file-not-found: {0}", schemaScriptPath);
+                    throw new FileNotFoundException($"Schema script file not found: {schemaScriptPath}");
+                }
+
+                Tracer.TraceInformation("using-schema-script: {0}", schemaScriptPath);
                 OpenRunspace();
-                Command cmd = new Command(Path.GetFullPath(SchemaScript));
+                Command cmd = new Command(Path.GetFullPath(schemaScriptPath));
                 cmd.Parameters.Add(new CommandParameter("Username", Username));
                 cmd.Parameters.Add(new CommandParameter("Password", Password));
                 cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
@@ -58,6 +73,19 @@ namespace Granfeldt
                 schemaResults = InvokePowerShellScript(cmd, null, allowPowerShell7: false);
                 CloseRunspace();
 
+                if (schemaResults == null)
+                {
+                    Tracer.TraceError("schema-script-returned-null-results");
+                    throw new InvalidOperationException("Schema script returned no results. Please check that the schema script is working correctly and returns valid schema objects.");
+                }
+
+                if (schemaResults.Count == 0)
+                {
+                    Tracer.TraceError("schema-script-returned-empty-results");
+                    throw new InvalidOperationException("Schema script returned empty results. Please check that the schema script is working correctly and returns valid schema objects.");
+                }
+
+                Tracer.TraceInformation("schema-script-returned-object-count: {0}", schemaResults.Count);
                 if (schemaResults != null)
                 {
                     foreach (PSObject obj in schemaResults)
@@ -74,7 +102,7 @@ namespace Granfeldt
                             if (string.Equals(attrName, Constants.ControlValues.ObjectClass, StringComparison.OrdinalIgnoreCase))
                             {
                                 objectTypeName = p.Value.ToString();
-                                Tracer.TraceInformation($"object-class '{objectTypeName}'");
+                                Tracer.TraceInformation("object-class '{0}'", objectTypeName);
                             }
                             else
                             {
@@ -91,14 +119,29 @@ namespace Granfeldt
                                 string cleanedAttrType = attrType.Replace("[]", "").ToLower();
                                 ad.Type = typeMappings.ContainsKey(cleanedAttrType) ? typeMappings[cleanedAttrType] : AttributeType.String;
 
-                                Tracer.TraceInformation($"name '{ad.Name}', isanchor: {ad.IsAnchor}, ismultivalue: {ad.IsMultiValue}, importonly: {ad.ImportOnly}, exportonly: {ad.ExportOnly}, type: {ad.Type}"); //, ad.Name, ad.IsAnchor, ad.IsMultiValue, ad.ImportOnly, ad.ExportOnly, ad.Type.ToString());
+                                Tracer.TraceInformation("name '{0}', isanchor: {1}, ismultivalue: {2}, importonly: {3}, exportonly: {4}, type: {5}", ad.Name, ad.IsAnchor, ad.IsMultiValue, ad.ImportOnly, ad.ExportOnly, ad.Type);
                                 attrs.Add(ad);
                             }
                         }
                         if (string.IsNullOrEmpty(objectTypeName))
                         {
                             Tracer.TraceError("missing-object-class");
-                            throw new NoSuchObjectTypeException();
+                            // Simplified logging to avoid format string issues
+                            try
+                            {
+                                Tracer.TraceError("schema-object-properties-found: " + obj.Properties.ToList().Count.ToString());
+                                foreach (PSPropertyInfo prop in obj.Properties)
+                                {
+                                    string propName = prop.Name ?? "(null)";
+                                    string propValue = prop.Value?.ToString() ?? "(null)";
+                                    Tracer.TraceError("schema-property: '" + propName + "' = '" + propValue + "'");
+                                }
+                            }
+                            catch (Exception traceEx)
+                            {
+                                Tracer.TraceError("error-during-schema-property-logging", traceEx);
+                            }
+                            throw new NoSuchObjectTypeException("Schema script returned an object without the required 'objectClass|string' property. Please ensure your schema script returns objects with proper objectClass definitions.");
                         }
 
                         SchemaType objectClass = SchemaType.Create(objectTypeName, true);
