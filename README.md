@@ -8,6 +8,8 @@ The management agent supports
 * [Tracing and Logging](https://github.com/sorengranfeldt/psma/wiki/Logging)
 * [Flexible Schemas](https://github.com/sorengranfeldt/psma/wiki/Schema)
 
+_NEW_ - Get help from the MA from the [PSMA AI Assistent](https://chatgpt.com/g/g-lxQzqGMp5-granfeldt-powershell-ma-assistent)
+
 ## Real-world uses
 Below are just a few potential use cases for the MA, although integration can be achieved with almost any system that allow for direct or indirect integration using PowerShell. 
 
