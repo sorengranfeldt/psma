@@ -250,8 +250,10 @@ namespace Granfeldt
                                     catch (System.Security.SecurityException secEx)
                                     {
                                         Tracer.TraceError("powershell7-impersonation-credential-validation-failed: {0}", secEx.Message);
-                                        // Re-throw security exceptions to provide clear error messages about credential issues
-                                        throw;
+                                        
+                                        // PowerShell 7+ does not support impersonation - fall back to Windows PowerShell 5.1
+                                        Tracer.TraceWarning("powershell7-impersonation-not-supported-falling-back", 1, secEx.Message);
+                                        throw new InvalidOperationException($"PowerShell 7+ impersonation not supported, falling back to Windows PowerShell 5.1: {secEx.Message}", secEx);
                                     }
                                     catch (Exception ex)
                                     {
@@ -285,12 +287,14 @@ namespace Granfeldt
                         Tracer.TraceInformation("*** USING POWERSHELL 7+ ENGINE FOR SCRIPT EXECUTION ***");
                         Tracer.TraceInformation("engine-type: '{0}'", powerShellEngine.EngineType);
                         Tracer.TraceInformation("engine-is-initialized: {0}", powerShellEngine.IsInitialized);
+                        Tracer.TraceInformation("impersonation-required: {0}", ShouldImpersonate());
+                        Tracer.TraceInformation("powershell7-execution-context: {0}", ShouldImpersonate() ? "ERROR: Should not reach here with impersonation" : "Non-impersonated execution (SAFE)");
                         powerShellEngine.OpenRunspace();
                         return powerShellEngine.InvokePowerShellScript(command, pipelineInput);
                     }
                     catch (PowerShell7ImpersonationException ps7ImpEx) when (ps7ImpEx.ShouldFallbackToWindowsPowerShell)
                     {
-                        Tracer.TraceError("powershell7-impersonation-incompatible-clear-error-message", ps7ImpEx);
+                        Tracer.TraceWarning("powershell7-impersonation-incompatible-falling-back-to-windows-powershell", 1, ps7ImpEx.Message);
                         
                         // Clean up the failed PowerShell 7+ engine
                         try
@@ -303,13 +307,18 @@ namespace Granfeldt
                         }
                         powerShellEngine = null;
                         
-                        // Don't fall back silently - throw a clear error explaining the limitation
-                        throw new InvalidOperationException(ps7ImpEx.Message, ps7ImpEx);
+                        // Log the fallback reason and continue to Windows PowerShell 5.1 execution
+                        Tracer.TraceInformation("*** POWERSHELL 7 IMPERSONATION FALLBACK ***");
+                        Tracer.TraceInformation("falling-back-to-windows-powershell51-due-to-impersonation-incompatibility: {0}", ps7ImpEx.Message);
+                        Tracer.TraceInformation("this-is-expected-behavior-powershell7-does-not-support-impersonation");
+                        
+                        // Continue execution with Windows PowerShell 5.1 (don't throw exception)
+                        // The code will naturally fall through to the Windows PowerShell 5.1 execution block below
                     }
                     catch (Exception ex)
                     {
-                        Tracer.TraceError("powershell7-execution-failed-falling-back-to-windows-powershell", ex);
-                        Tracer.TraceWarning("powershell7-fallback-reason", 1, ex.Message);
+                        Tracer.TraceError("powershell7-execution-failed-falling-back-to-windows-powershell: {0}", ex.Message?.Replace("{", "{{").Replace("}", "}}"));
+                        Tracer.TraceWarning("powershell7-fallback-reason: {0}", 1, ex.Message?.Replace("{", "{{").Replace("}", "}}"));
                         
                         // Clean up the failed PowerShell 7+ engine
                         try
@@ -331,7 +340,30 @@ namespace Granfeldt
                 Tracer.TraceInformation("*** WINDOWS POWERSHELL 5.1 EXECUTION DECISION ***");
                 Tracer.TraceInformation("powershell7-engine-is-null: {0}", powerShellEngine == null);
                 Tracer.TraceInformation("should-use-powershell7: {0}", ShouldUsePowerShell7());
-                Tracer.TraceInformation("reason-for-windows-ps: {0}", powerShellEngine == null ? "PowerShell 7 engine is null (initialization failed)" : "Configuration set to Windows PowerShell 5.1");
+                
+                // Determine the specific reason for using Windows PowerShell 5.1
+                string fallbackReason;
+                bool isPowerShell7Configured = PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7");
+                bool requiresImpersonation = ShouldImpersonate();
+                
+                if (powerShellEngine == null)
+                {
+                    fallbackReason = "PowerShell 7 engine is null (initialization failed)";
+                }
+                else if (!isPowerShell7Configured)
+                {
+                    fallbackReason = "Configuration set to Windows PowerShell 5.1";
+                }
+                else if (isPowerShell7Configured && requiresImpersonation)
+                {
+                    fallbackReason = "AUTOMATIC FALLBACK: PowerShell 7 configured but impersonation required (PowerShell 7 does not support impersonation)";
+                }
+                else
+                {
+                    fallbackReason = "Unknown reason";
+                }
+                
+                Tracer.TraceInformation("reason-for-windows-ps: {0}", fallbackReason);
                 
                 if (powerShellEngine == null || !ShouldUsePowerShell7())
                 {
@@ -436,8 +468,34 @@ namespace Granfeldt
             }
 
             // Check if PowerShell 7+ is configured
-            bool shouldUse = PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7");
-            Tracer.TraceInformation("should-use-powershell7: {0}, powershell-version-property: '{1}'", shouldUse, PowerShellVersion ?? "(null)");
+            bool isPowerShell7Configured = PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7");
+            Tracer.TraceInformation("powershell7-configured: {0}, powershell-version-property: '{1}'", isPowerShell7Configured, PowerShellVersion ?? "(null)");
+            
+            // If PowerShell 7 is not configured, use Windows PowerShell 5.1
+            if (!isPowerShell7Configured)
+            {
+                Tracer.TraceInformation("powershell7-not-configured-using-windows-powershell51");
+                return false;
+            }
+            
+            // HYBRID FALLBACK LOGIC: PowerShell 7 does not support impersonation
+            // If impersonation is required, automatically fall back to Windows PowerShell 5.1
+            bool requiresImpersonation = ShouldImpersonate();
+            Tracer.TraceInformation("*** HYBRID ENGINE SELECTION LOGIC ***");
+            Tracer.TraceInformation("powershell7-configured: {0}", isPowerShell7Configured);
+            Tracer.TraceInformation("requires-impersonation: {0}", requiresImpersonation);
+            
+            if (requiresImpersonation)
+            {
+                Tracer.TraceInformation("powershell7-with-impersonation-not-supported-falling-back-to-windows-powershell51");
+                Tracer.TraceWarning("automatic-fallback-powershell7-impersonation-unsupported", 1, 
+                    "Impersonation with PowerShell 7 is not implemented. Automatically falling back to Windows PowerShell 5.1 for impersonated operations. " +
+                    "WARNING: If your scripts contain PowerShell 7-specific syntax (ternary operators, null coalescing, etc.), they will fail in Windows PowerShell 5.1 with syntax errors.");
+                return false; // Force fallback to Windows PowerShell 5.1
+            }
+            
+            // PowerShell 7 is configured and no impersonation is required - safe to use PowerShell 7
+            Tracer.TraceInformation("powershell7-safe-to-use-no-impersonation-required");
             
             // ENHANCED DEBUG: Detailed engine selection analysis
             Tracer.TraceInformation("*** ENHANCED ENGINE SELECTION DEBUG ***");
@@ -450,7 +508,7 @@ namespace Granfeldt
                 Tracer.TraceInformation("powershell-version-exact-match-check: '{0}' == 'PowerShell 7' = {1}", PowerShellVersion, PowerShellVersion == "PowerShell 7");
             }
             
-            return shouldUse;
+            return true; // Use PowerShell 7 for non-impersonated operations
         }
 
         string GetPowerShell7Path()
