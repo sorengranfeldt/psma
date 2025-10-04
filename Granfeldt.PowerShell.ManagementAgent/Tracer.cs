@@ -20,28 +20,109 @@ namespace Granfeldt
         }
         public static void TraceInformation(string message, params object[] param)
         {
-            trace.TraceInformation(message, param);
+            if (param == null || param.Length == 0)
+            {
+                // No parameters provided, treat message as literal text to avoid format string issues
+                trace.TraceInformation("{0}", message);
+            }
+            else
+            {
+                try
+                {
+                    // Parameters provided, format the message safely
+                    trace.TraceInformation(message, param);
+                }
+                catch (FormatException)
+                {
+                    // If format fails, use safe concatenation
+                    var sb = new StringBuilder(message ?? "");
+                    sb.Append(" [params: ");
+                    for (int i = 0; i < param.Length; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(param[i]?.ToString() ?? "null");
+                    }
+                    sb.Append("]");
+                    trace.TraceInformation("{0}", sb.ToString());
+                }
+            }
         }
         public static void TraceWarning(string message, int warningCode = 1, params object[] param)
         {
-            string msg = string.Format(message, param);
-            trace.TraceEvent(TraceEventType.Warning, warningCode, GetMessageFromException(null, msg));
+            // Use safe approach to avoid format string exceptions
+            string msg;
+            if (param == null || param.Length == 0)
+            {
+                // No parameters provided, treat message as literal text
+                msg = message ?? "";
+            }
+            else
+            {
+                try
+                {
+                    msg = string.Format(message, param);
+                }
+                catch (FormatException)
+                {
+                    // If format fails, concatenate the message with parameters safely
+                    var sb = new StringBuilder(message ?? "");
+                    sb.Append(" [params: ");
+                    for (int i = 0; i < param.Length; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(param[i]?.ToString() ?? "null");
+                    }
+                    sb.Append("]");
+                    msg = sb.ToString();
+                }
+            }
+            trace.TraceEvent(TraceEventType.Warning, warningCode, "{0}", GetMessageFromException(null, msg));
         }
         internal static string GetMessageFromException(Exception ex, string message)
         {
             if (ex == null)
-                return message;
+                return message ?? "";
             else
-                return string.Format("{0}, {1}", message, ex.GetBaseException()?.Message);
+            {
+                // Use string interpolation to completely avoid format string issues
+                string safemessage = message ?? "";
+                string safeException = ex.GetBaseException()?.Message ?? "Unknown error";
+                return $"{safemessage}, {safeException}";
+            }
         }
         public static void TraceError(string message, int id, params object[] param)
         {
-            trace.TraceEvent(TraceEventType.Error, id, message, param);
+            if (param == null || param.Length == 0)
+            {
+                // No parameters provided, treat message as literal text to avoid format string issues
+                trace.TraceEvent(TraceEventType.Error, id, "{0}", message);
+            }
+            else
+            {
+                try
+                {
+                    // Parameters provided, format the message safely
+                    trace.TraceEvent(TraceEventType.Error, id, message, param);
+                }
+                catch (FormatException)
+                {
+                    // If format fails, use safe concatenation
+                    var sb = new StringBuilder(message ?? "");
+                    sb.Append(" [params: ");
+                    for (int i = 0; i < param.Length; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(param[i]?.ToString() ?? "null");
+                    }
+                    sb.Append("]");
+                    trace.TraceEvent(TraceEventType.Error, id, "{0}", sb.ToString());
+                }
+            }
         }
         public static void TraceError(string message, Exception ex, int errorCode = 1)
         {
             string msg = GetMessageFromException(ex, message);
-            trace.TraceEvent(TraceEventType.Error, ex.HResult, msg);
+            trace.TraceEvent(TraceEventType.Error, errorCode, "{0}", msg);
         }
         public static void TraceError(string message, params object[] param)
         {

@@ -10,7 +10,6 @@ namespace Granfeldt
 {
 	public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
 	{
-		string PasswordManagementScript = null;
 		Collection<PSObject> passwordResults;
 		enum PasswordOperation
 		{
@@ -64,7 +63,7 @@ namespace Granfeldt
 			PSDataCollection<PSObject> passwordPipeline = new PSDataCollection<PSObject>();
 			try
 			{
-				Command cmd = new Command(Path.GetFullPath(PasswordManagementScript));
+				Command cmd = new Command(Path.GetFullPath(passwordManagementScriptPath));
 				cmd.Parameters.Add(new CommandParameter("Username", Username));
 				cmd.Parameters.Add(new CommandParameter("Password", Password));
 				cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
@@ -121,8 +120,35 @@ namespace Granfeldt
 			Tracer.Enter("closepasswordconnection");
 			try
 			{
-				CloseRunspace();
-				Dispose();
+				try
+				{
+					CloseRunspace();
+				}
+				catch (AppDomainUnloadedException)
+				{
+					// AppDomain is unloading, ignore runspace cleanup
+				}
+				catch (Exception ex)
+				{
+					Tracer.TraceWarning("closepassword-runspace-cleanup-error", 1, ex.Message);
+				}
+				
+				try
+				{
+					Dispose();
+				}
+				catch (AppDomainUnloadedException)
+				{
+					// AppDomain is unloading, ignore disposal
+				}
+				catch (Exception ex)
+				{
+					Tracer.TraceWarning("closepassword-dispose-error", 1, ex.Message);
+				}
+			}
+			catch (AppDomainUnloadedException)
+			{
+				// AppDomain is unloading, allow graceful exit
 			}
 			catch (Exception ex)
 			{
