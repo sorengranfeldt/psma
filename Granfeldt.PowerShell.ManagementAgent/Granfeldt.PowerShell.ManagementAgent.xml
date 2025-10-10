@@ -13,34 +13,49 @@
     <ma-companyname>Soren Granfeldt</ma-companyname>
     <subtype>PowerShell</subtype>
     <ma-listname>PowerShell</ma-listname>
-    <id>{C75B4BAD-B875-4863-89BE-3F5EBE1E080D}</id>
+    <id>{44D74A23-B80A-4BBD-9F1A-70E0781A5C0D}</id>
     <category>Extensible2</category>
-    <password-sync-allowed>1</password-sync-allowed>
+    <password-sync-allowed>0</password-sync-allowed>
     <schema>
       <dsml:dsml xmlns:ms-dsml="http://www.microsoft.com/MMS/DSML" xmlns:dsml="http://www.dsml.org/DSML">
         <dsml:directory-schema ms-dsml:no-objectclass-validation="true">
           <dsml:class id="person" type="structural" ms-dsml:locked="1">
             <dsml:name>person</dsml:name>
-            <dsml:attribute ref="#Department" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#FirstName" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#LastName" required="false" ms-dsml:isAnchor="false" />
-            <dsml:attribute ref="#UserName" required="true" ms-dsml:isAnchor="true" />
+            <dsml:attribute ref="#USER_FIRST_NAME" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#USER_LAST_NAME" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#EMAIL" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#STREET" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#CITY_STATE" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#ZIP" required="false" ms-dsml:isAnchor="false" />
+            <dsml:attribute ref="#USER_ID" required="true" ms-dsml:isAnchor="true" />
             <dsml:attribute ref="#export_password" required="false" />
           </dsml:class>
-          <dsml:attribute-type id="Department" single-value="true">
-            <dsml:name>Department</dsml:name>
+          <dsml:attribute-type id="USER_FIRST_NAME" single-value="true">
+            <dsml:name>USER_FIRST_NAME</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="FirstName" single-value="true">
-            <dsml:name>FirstName</dsml:name>
+          <dsml:attribute-type id="USER_LAST_NAME" single-value="true">
+            <dsml:name>USER_LAST_NAME</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="LastName" single-value="true">
-            <dsml:name>LastName</dsml:name>
+          <dsml:attribute-type id="EMAIL" single-value="true">
+            <dsml:name>EMAIL</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
-          <dsml:attribute-type id="UserName" single-value="true" ms-dsml:immutable="true">
-            <dsml:name>UserName</dsml:name>
+          <dsml:attribute-type id="STREET" single-value="true">
+            <dsml:name>STREET</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="CITY_STATE" single-value="true">
+            <dsml:name>CITY_STATE</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="ZIP" single-value="true">
+            <dsml:name>ZIP</dsml:name>
+            <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
+          </dsml:attribute-type>
+          <dsml:attribute-type id="USER_ID" single-value="true" ms-dsml:immutable="true">
+            <dsml:name>USER_ID</dsml:name>
             <dsml:syntax>1.3.6.1.4.1.1466.115.121.1.15</dsml:syntax>
           </dsml:attribute-type>
           <dsml:attribute-type id="export_password" single-value="true" ms-dsml:encrypted="true" ms-dsml:export-only="true">
@@ -53,13 +68,11 @@
     <attribute-inclusion>
     </attribute-inclusion>
     <stay-disconnector />
-    <join>
-    </join>
-    <projection />
-    <export-attribute-flow>
-    </export-attribute-flow>
-    <extension>
-    </extension>
+    <join />
+    <projection>
+    </projection>
+    <export-attribute-flow />
+    <extension />
     <controller-configuration>
       <application-architecture>process</application-architecture>
     </controller-configuration>
@@ -90,7 +103,7 @@
             <attributes>
             </attributes>
             <anchor>
-              <attribute object_class="person">UserName</attribute>
+              <attribute object_class="person">USER_ID</attribute>
             </anchor>
           </xmlwizard>
           <ma-help-text>With this management agent, you can run Powershell scripts for import, export and password management.</ma-help-text>
@@ -111,7 +124,7 @@
         </primary_class_mappings>
         <enable-unapplied-merge>0</enable-unapplied-merge>
         <password-extension-config>
-          <password-extension-enabled>1</password-extension-enabled>
+          <password-extension-enabled>0</password-extension-enabled>
           <dll data-owner="ISV">Granfeldt.PowerShell.ManagementAgent.dll</dll>
           <password-set-enabled>1</password-set-enabled>
           <password-change-enabled>1</password-change-enabled>
@@ -129,7 +142,7 @@
           <import-default-page-size>100</import-default-page-size>
           <import-max-page-size>10000</import-max-page-size>
           <export-default-page-size>100</export-default-page-size>
-          <export-max-page-size>500</export-max-page-size>
+          <export-max-page-size>9999</export-max-page-size>
           <export-mode data-owner="ISV">call-based</export-mode>
           <import-mode>call-based</import-mode>
           <export-enabled data-owner="ISV">1</export-enabled>
@@ -142,7 +155,7 @@
           <discovery-hierarchy>
           </discovery-hierarchy>
           <password-management-enabled>1</password-management-enabled>
-          <assembly-version>5.6.0.0</assembly-version>
+          <assembly-version>6.0.0.0</assembly-version>
           <supports-parameters-ex>0</supports-parameters-ex>
         </extension-config>
         <parameter-definitions refreshSchema="0" refreshPartition="0" refreshConnectivityParameters="0" refreshGlobalParameters="0" refreshOtherParameters="0" refreshSchemaParameters="0" refreshCapabilitiesParameters="0">
@@ -254,7 +267,18 @@
             <type>label</type>
             <validation>
             </validation>
-            <text>Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified,  the scripts are run in the security context of the FIM Synchronization Service service account.</text>
+            <text>Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified, the scripts are run in the security context of the FIM Synchronization Service service account.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>NOTE: Impersonation with PowerShell 7 is not implemented. If impersonation credentials are provided and PowerShell 7 is selected, the system will automatically fall back to Windows PowerShell 5.1 for impersonated operations. WARNING: Scripts with PowerShell 7-specific syntax will fail in Windows PowerShell 5.1.</text>
             <default-value>
             </default-value>
           </parameter>
@@ -284,6 +308,61 @@
             <name>Password  (impersonate)</name>
             <use>connectivity</use>
             <type>encrypted-string</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>PowerShell Engine Configuration: Select which PowerShell engine to use for script execution.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>connectivity</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>PowerShell 7 provides better performance and modern features but impersonation is not implemented. When impersonation is required, the system automatically uses Windows PowerShell 5.1. Ensure scripts are compatible with both versions.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>PowerShell Version</name>
+            <use>connectivity</use>
+            <type>drop-down</type>
+            <validation>Windows PowerShell 5.1,PowerShell 7</validation>
+            <text>
+            </text>
+            <default-value>Windows PowerShell 5.1</default-value>
+            <dropdown-extensible>0</dropdown-extensible>
+          </parameter>
+          <parameter>
+            <name>PowerShell 7 Executable Path</name>
+            <use>connectivity</use>
+            <type>string</type>
             <validation>
             </validation>
             <text>
@@ -450,11 +529,15 @@
         <parameter-values>
         </parameter-values>
         <default_visible_attributes>
-          <attribute>UserName</attribute>
-          <attribute>Department</attribute>
-          <attribute>FirstName</attribute>
-          <attribute>LastName</attribute>
+          <attribute>USER_ID</attribute>
+          <attribute>USER_FIRST_NAME</attribute>
+          <attribute>USER_LAST_NAME</attribute>
+          <attribute>EMAIL</attribute>
+          <attribute>STREET</attribute>
+          <attribute>CITY_STATE</attribute>
+          <attribute>ZIP</attribute>
         </default_visible_attributes>
+        <case_normalize_dn_for_anchor>1</case_normalize_dn_for_anchor>
       </MAConfig>
     </private-configuration>
     <SyncConfig-refresh-schema>0</SyncConfig-refresh-schema>
