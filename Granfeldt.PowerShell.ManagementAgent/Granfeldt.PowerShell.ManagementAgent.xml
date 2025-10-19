@@ -11,8 +11,8 @@
     <format-version>1</format-version>
     <internal-version>1</internal-version>
     <ma-companyname>Soren Granfeldt</ma-companyname>
-    <subtype>PowerShell (Soren Granfeldt)</subtype>
-    <ma-listname>PowerShell (Soren Granfeldt)</ma-listname>
+    <subtype>PowerShell</subtype>
+    <ma-listname>PowerShell</ma-listname>
     <id>{44D74A23-B80A-4BBD-9F1A-70E0781A5C0D}</id>
     <category>Extensible2</category>
     <password-sync-allowed>0</password-sync-allowed>

@@ -12,8 +12,8 @@
  <id>{44D74A23-B80A-4BBD-9F1A-70E0781A5C0D}</id>
  <name>PSMA7</name>
  <category>Extensible2</category>
- <subtype>PowerShell (Soren Granfeldt)</subtype>
- <ma-listname>PowerShell (Soren Granfeldt)</ma-listname>
+ <subtype>PowerShell</subtype>
+ <ma-listname>PowerShell</ma-listname>
  <ma-companyname>Soren Granfeldt</ma-companyname>
  <creation-time>2025-10-04 22:40:50.686</creation-time>
  <last-modification-time>2025-10-04 22:40:50.686</last-modification-time>
