@@ -12,6 +12,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Json;
 
 namespace Granfeldt
 {
@@ -705,15 +706,27 @@ namespace Granfeldt
                     stdinContent.AppendLine("            # Handle hashtable objects - output as key=value pairs");
                     stdinContent.AppendLine("            foreach ($key in $obj.Keys) {");
                     stdinContent.AppendLine("                $value = $obj[$key]");
-                    stdinContent.AppendLine("                if ($null -eq $value) { $value = '' }");
-                    stdinContent.AppendLine("                Write-Host \"$key=$value\"");
+                    stdinContent.AppendLine("                if ($null -eq $value) { ");
+                    stdinContent.AppendLine("                    $typeNameOfValue = 'System.Object'");
+                    stdinContent.AppendLine("                    $valueStr = ''");
+                    stdinContent.AppendLine("                } else {");
+                    stdinContent.AppendLine("                    $typeNameOfValue = $value.GetType().FullName");
+                    stdinContent.AppendLine("                    if ($value -is [bool]) {");
+                    stdinContent.AppendLine("                        $valueStr = if ($value) { 'True' } else { 'False' }");
+                    stdinContent.AppendLine("                    } elseif ($value -is [int] -or $value -is [double] -or $value -is [decimal]) {");
+                    stdinContent.AppendLine("                        $valueStr = $value.ToString()");
+                    stdinContent.AppendLine("                    } else {");
+                    stdinContent.AppendLine("                        $valueStr = ConvertTo-Json $value -Compress");
+                    stdinContent.AppendLine("                    }");
+                    stdinContent.AppendLine("                }");
+                    stdinContent.AppendLine("                Write-Host ($typeNameOfValue + '|' + $key + '=' + $valueStr)");
                     stdinContent.AppendLine("            }");
                     stdinContent.AppendLine("        } elseif ($obj -is [PSCustomObject] -or $obj.GetType().Name -eq 'PSObject') {");
                     stdinContent.AppendLine("            # Handle PSObject/PSCustomObject - convert to hashtable format");
                     stdinContent.AppendLine("            $obj.PSObject.Properties | ForEach-Object {");
                     stdinContent.AppendLine("                $value = $_.Value");
-                    stdinContent.AppendLine("                if ($null -eq $value) { $value = '' }");
-                    stdinContent.AppendLine("                Write-Host \"$($_.Name)=$value\"");
+                    stdinContent.AppendLine("                if ($null -eq $value) { $value = ''; $typeNameOfValue = 'System.Object' } else { $typeNameOfValue = $_.TypeNameOfValue; $value = ConvertTo-Json $value -Compress }");
+                    stdinContent.AppendLine("                Write-Host ($typeNameOfValue + '|' + $_.Name + '=' + $value)");
                     stdinContent.AppendLine("            }");
                     stdinContent.AppendLine("        } else {");
                     stdinContent.AppendLine("            # Handle other object types - try to convert to hashtable-like format");
@@ -722,16 +735,16 @@ namespace Granfeldt
                     stdinContent.AppendLine("                if ($properties) {");
                     stdinContent.AppendLine("                    foreach ($prop in $properties) {");
                     stdinContent.AppendLine("                        $value = $obj.$prop");
-                    stdinContent.AppendLine("                        if ($null -eq $value) { $value = '' }");
-                    stdinContent.AppendLine("                        Write-Host \"$prop=$value\"");
+                    stdinContent.AppendLine("                        if ($null -eq $value) { $value = ''; $typeNameOfValue = 'System.Object' } else { $typeNameOfValue = $value.GetType().FullName; $value = ConvertTo-Json $value -Compress }");
+                    stdinContent.AppendLine("                        Write-Host ($typeNameOfValue + '|' + $prop + '=' + $value)");
                     stdinContent.AppendLine("                    }");
                     stdinContent.AppendLine("                } else {");
                     stdinContent.AppendLine("                    # Object has no discoverable properties, use string representation");
-                    stdinContent.AppendLine("                    Write-Host \"_ObjectValue=$obj\"");
+                    stdinContent.AppendLine("                    Write-Host ('System.String|_ObjectValue=' + $obj)");
                     stdinContent.AppendLine("                }");
                     stdinContent.AppendLine("            } catch {");
                     stdinContent.AppendLine("                # Fallback: use string representation");
-                    stdinContent.AppendLine("                Write-Host \"_ObjectValue=$obj\"");
+                    stdinContent.AppendLine("                Write-Host ('System.String|_ObjectValue=' + $obj)");
                     stdinContent.AppendLine("            }");
                     stdinContent.AppendLine("        }");
                     stdinContent.AppendLine("        ");
@@ -1668,13 +1681,25 @@ namespace Granfeldt
                                         foreach (var kvLine in lines)
                                         {
                                             var trimmedKvLine = kvLine.Trim();
-                                            var equalIndex = trimmedKvLine.IndexOf('=');
-                                            if (equalIndex > 0 && equalIndex < trimmedKvLine.Length - 1)
+                                            var pipeIndex = trimmedKvLine.IndexOf('|');
+                                            if (pipeIndex > 0 && pipeIndex < trimmedKvLine.Length - 1)
                                             {
-                                                string key = trimmedKvLine.Substring(0, equalIndex);
-                                                string value = trimmedKvLine.Substring(equalIndex + 1);
-                                                hashTable[key] = value;
-                                                propertyCount++;
+                                                var propertyType = trimmedKvLine.Substring(0, pipeIndex);
+                                                var keyvalue = trimmedKvLine.Substring(pipeIndex + 1);
+
+                                                var equalIndex = keyvalue.IndexOf('=');
+                                                if (equalIndex > 0)
+                                                {
+                                                    string key = keyvalue.Substring(0, equalIndex);
+                                                    string value = null;
+                                                    if (equalIndex < keyvalue.Length - 1)
+                                                    {
+                                                        value = keyvalue.Substring(equalIndex + 1);
+                                                    }
+
+                                                    hashTable[key] = ConvertFromJSONString(value, propertyType);
+                                                    propertyCount++;
+                                                }
                                             }
                                         }
                                         
@@ -2971,6 +2996,59 @@ namespace Granfeldt
             }
             
             return results;
+        }
+
+        private object ConvertFromJSONString(string jsonString, string typeName)
+        {
+            if (jsonString == null)
+                return null;
+
+            // Handle simple types directly without JSON serialization
+            switch (typeName)
+            {
+                case "System.Boolean":
+                    if (bool.TryParse(jsonString, out bool boolResult))
+                        return boolResult;
+                    break;
+                case "System.Int32":
+                    if (int.TryParse(jsonString, out int intResult))
+                        return intResult;
+                    break;
+                case "System.Double":
+                    if (double.TryParse(jsonString, out double doubleResult))
+                        return doubleResult;
+                    break;
+                case "System.Decimal":
+                    if (decimal.TryParse(jsonString, out decimal decimalResult))
+                        return decimalResult;
+                    break;
+                case "System.String":
+                    return jsonString;
+                case "System.Object":
+                    return jsonString; // Handle null case
+            }
+
+            // For complex types, try JSON deserialization
+            try
+            {
+                Type targetType = Type.GetType(typeName);
+                if (targetType != null)
+                {
+                    var serializer = new DataContractJsonSerializer(targetType);
+                    using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
+                    {
+                        return serializer.ReadObject(stream);
+                    }
+                }
+            }
+            catch
+            {
+                // If JSON deserialization fails, return as string
+                return jsonString;
+            }
+
+            // Fallback to string
+            return jsonString;
         }
 
         private string ConvertToLiteral(object value)
