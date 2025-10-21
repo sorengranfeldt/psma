@@ -314,7 +314,7 @@ namespace Granfeldt
                             }
                             Tracer.TraceInformation("end-getting-control-values");
 
-                            if (AnchorValue == null)
+                            if (AnchorValue == null && string.IsNullOrEmpty(ErrorName))
                             {
                                 Tracer.TraceError("missing-anchor");
                                 ImportErrorType = MAImportError.ImportErrorCustomContinueRun;

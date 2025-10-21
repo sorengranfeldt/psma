@@ -20,6 +20,7 @@ $testData = @{
     "Salary" = 75000.50
     "Department" = "Engineering"
     "emails|String" = @("john.doe@company.com", "j.doe@backup.com")
+    "proxyAddresses|String" = @("smtp:john@company.com", "SMTP:john.doe@company.com", "sip:john@company.com")
     "scores|Int32" = @(85, 92, 78)
 }
 
@@ -51,6 +52,9 @@ foreach ($key in $testData.Keys) {
         # This is the exact logic from PowerShell7Engine.cs (our fix)
         if ($value -is [bool]) {
             $valueStr = if ($value) { 'True' } else { 'False' }
+        } elseif ($value -is [string]) {
+            # String fix: Don't JSON-encode simple strings
+            $valueStr = $value.ToString()
         } elseif ($value -is [int] -or $value -is [double] -or $value -is [decimal]) {
             $valueStr = $value.ToString()
         } else {
@@ -141,20 +145,72 @@ foreach ($key in $serializedData.Keys) {
         } else {
             Write-Host "  ✗ Value/type mismatch: $originalValue vs $deserializedValue" -ForegroundColor Red
         }
+        
+        # Special validation for multi-valued strings
+        if ($key -like "*|String" -and $originalValue -is [array]) {
+            $allStrings = $true
+            foreach ($item in $deserializedValue) {
+                if (-not ($item -is [string])) {
+                    $allStrings = $false
+                    break
+                }
+            }
+            if ($allStrings) {
+                Write-Host "    ✓ All items in multi-valued string array are strings" -ForegroundColor Green
+            } else {
+                Write-Host "    ✗ Some items in multi-valued string array are not strings" -ForegroundColor Red
+            }
+        }
     }
 }
 
+# String Serialization Validation
+Write-Host "`n=== String Serialization Fix Validation ===" -ForegroundColor Yellow
+
+$stringTests = @("Department")  # Only test single string values, not arrays
+$stringTestsPassed = 0
+$stringTestsTotal = 0
+
+foreach ($key in $stringTests) {
+    if ($serializedData.ContainsKey($key)) {
+        $serializedValue = $serializedData[$key]
+        $stringTestsTotal++
+        
+        # Check if string values are NOT JSON-encoded (no quotes)
+        if ($serializedValue -match '^System\.String\|[^=]+=(.*)$') {
+            $valueString = $matches[1]
+            if (-not ($valueString.StartsWith('"') -and $valueString.EndsWith('"'))) {
+                Write-Host "  ✓ ${key}: String serialized without JSON quotes" -ForegroundColor Green
+                $stringTestsPassed++
+            } else {
+                Write-Host "  ✗ ${key}: String still has JSON quotes: $valueString" -ForegroundColor Red
+            }
+        }
+    }
+}
+
+# Note about string arrays
+Write-Host "  ℹ Note: String arrays (like emails|String) correctly use JSON for array serialization" -ForegroundColor Cyan
+
+Write-Host "String Tests Passed: $stringTestsPassed / $stringTestsTotal" -ForegroundColor White
+
 # Final Assessment
 Write-Host "`n=== Test Results ===" -ForegroundColor Cyan
-Write-Host "Tests Passed: $testsPassed / $testsTotal" -ForegroundColor White
+Write-Host "Type Preservation Tests Passed: $testsPassed / $testsTotal" -ForegroundColor White
+Write-Host "String Serialization Tests Passed: $stringTestsPassed / $stringTestsTotal" -ForegroundColor White
 
-if ($testsPassed -eq $testsTotal) {
-    Write-Host "`n SUCCESS! PowerShell 7 Boolean serialization fix is working!" -ForegroundColor Green
+$allTestsPassed = ($testsPassed -eq $testsTotal) -and ($stringTestsPassed -eq $stringTestsTotal)
+$totalAllTests = $testsTotal + $stringTestsTotal
+$totalAllPassed = $testsPassed + $stringTestsPassed
+
+if ($allTestsPassed) {
+    Write-Host "`n SUCCESS! PowerShell 7 Boolean & String serialization fixes are working!" -ForegroundColor Green
     Write-Host "✓ Single Boolean values preserved as Boolean type" -ForegroundColor Green
     Write-Host "✓ Multi-valued Boolean arrays preserved correctly" -ForegroundColor Green
+    Write-Host "✓ String values serialized without JSON quotes" -ForegroundColor Green
     Write-Host "✓ GitHub Issue #30 is resolved!" -ForegroundColor Green
 } else {
-    Write-Host "`n FAILURE: Some type preservation tests failed" -ForegroundColor Red
+    Write-Host "`n FAILURE: Some tests failed ($totalAllPassed / $totalAllTests)" -ForegroundColor Red
     Write-Host "The fix may need additional work" -ForegroundColor Red
 }
 

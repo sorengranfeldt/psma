@@ -715,6 +715,8 @@ namespace Granfeldt
                     stdinContent.AppendLine("                        $valueStr = if ($value) { 'True' } else { 'False' }");
                     stdinContent.AppendLine("                    } elseif ($value -is [int] -or $value -is [double] -or $value -is [decimal]) {");
                     stdinContent.AppendLine("                        $valueStr = $value.ToString()");
+                    stdinContent.AppendLine("                    } elseif ($value -is [string]) {");
+                    stdinContent.AppendLine("                        $valueStr = $value.ToString()");
                     stdinContent.AppendLine("                    } else {");
                     stdinContent.AppendLine("                        $valueStr = ConvertTo-Json $value -Compress");
                     stdinContent.AppendLine("                    }");
