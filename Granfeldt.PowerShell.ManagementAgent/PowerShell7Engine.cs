@@ -640,6 +640,24 @@ namespace Granfeldt
                     stdinContent.AppendLine("$global:PSMA_OUT_OF_PROCESS = $true");
                     stdinContent.AppendLine("");
                     
+                    // Set additional engine identification variables for compatibility with Windows PowerShell 5.1
+                    stdinContent.AppendLine("# Engine compatibility variables");
+                    stdinContent.AppendLine("$global:PSMAEngineType = 'PowerShell 7+ (Out-of-Process)'");
+                    stdinContent.AppendLine("$global:PSMAEngineVersion = '7.0'");
+                    stdinContent.AppendLine("$global:PSMAEngineSelected = 'PowerShell 7+ (Out-of-Process)'");
+                    stdinContent.AppendLine("");
+                    
+                    // Inject session variables (if any were set)
+                    if (sessionVariables != null && sessionVariables.Count > 0)
+                    {
+                        stdinContent.AppendLine("# Session variables");
+                        foreach (var variable in sessionVariables)
+                        {
+                            stdinContent.AppendLine($"$global:{variable.Key} = {ConvertToLiteral(variable.Value)}");
+                        }
+                        stdinContent.AppendLine("");
+                    }
+                    
                     // Define all parameters directly in stdin script
                     if (parameters != null)
                     {
@@ -2670,6 +2688,13 @@ namespace Granfeldt
                     scriptBuilder.AppendLine("# PowerShell 7+ Out-of-Process PSMA Engine");
                     scriptBuilder.AppendLine("$global:PSMA_ENGINE = 'PowerShell7-OutOfProcess'");
                     scriptBuilder.AppendLine("$global:PS7ENGINE = $true");
+                    
+                    // Set additional engine identification variables for compatibility with Windows PowerShell 5.1
+                    scriptBuilder.AppendLine("# Engine compatibility variables");
+                    scriptBuilder.AppendLine("$global:PSMAEngineType = 'PowerShell 7+ (Out-of-Process)'");
+                    scriptBuilder.AppendLine("$global:PSMAEngineVersion = '7.0'");
+                    scriptBuilder.AppendLine("$global:PSMAEngineSelected = 'PowerShell 7+ (Out-of-Process)'");
+                    scriptBuilder.AppendLine("");
                     
                     // Inject session variables (if any were set)
                     if (sessionVariables != null && sessionVariables.Count > 0)
