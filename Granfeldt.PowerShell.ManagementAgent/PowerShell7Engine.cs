@@ -658,6 +658,59 @@ namespace Granfeldt
                         stdinContent.AppendLine("");
                     }
                     
+                    // CRITICAL FIX: Inject pipeline input objects as $input variable
+                    if (pipelineInput != null && pipelineInput.Count > 0)
+                    {
+                        stdinContent.AppendLine("# Pipeline input objects serialization");
+                        stdinContent.AppendLine("$pipelineObjects = @()");
+                        Tracer.TraceInformation("powershell7-serializing-pipeline-input-objects: {0}", pipelineInput.Count);
+                        
+                        int objectIndex = 0;
+                        foreach (var psobject in pipelineInput)
+                        {
+                            objectIndex++;
+                            if (psobject != null)
+                            {
+                                try
+                                {
+                                    // Serialize each pipeline object to recreate it in the child process
+                                    string serializedObject = SerializePipelineObject(psobject);
+                                    stdinContent.AppendLine($"# Pipeline object {objectIndex}");
+                                    stdinContent.AppendLine($"$pipelineObjects += {serializedObject}");
+                                    Tracer.TraceInformation("powershell7-pipeline-object-serialized: {0} (length: {1})", objectIndex, serializedObject.Length);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Tracer.TraceWarning("powershell7-pipeline-object-serialization-failed: object-{0}, error: {1}", objectIndex, ex.Message);
+                                    // Add a null placeholder to maintain object count consistency
+                                    stdinContent.AppendLine($"# Pipeline object {objectIndex} (serialization failed)");
+                                    stdinContent.AppendLine("$pipelineObjects += $null");
+                                }
+                            }
+                            else
+                            {
+                                stdinContent.AppendLine($"# Pipeline object {objectIndex} (null)");
+                                stdinContent.AppendLine("$pipelineObjects += $null");
+                            }
+                        }
+                        
+                        // Set up $input variable to make pipeline objects available to the script
+                        stdinContent.AppendLine("");
+                        stdinContent.AppendLine("# Make pipeline objects available as $input automatic variable");
+                        stdinContent.AppendLine("$input = $pipelineObjects");
+                        stdinContent.AppendLine($"Write-Host 'PSMA: Injected {pipelineInput.Count} pipeline objects into PowerShell 7 execution'");
+                        stdinContent.AppendLine("");
+                        
+                        Tracer.TraceInformation("powershell7-pipeline-input-injection-complete: {0} objects", pipelineInput.Count);
+                    }
+                    else
+                    {
+                        Tracer.TraceInformation("powershell7-no-pipeline-input-objects-to-inject");
+                        stdinContent.AppendLine("# No pipeline input objects");
+                        stdinContent.AppendLine("$input = @()");
+                        stdinContent.AppendLine("");
+                    }
+                    
                     // Define all parameters directly in stdin script
                     if (parameters != null)
                     {
@@ -3078,6 +3131,106 @@ namespace Granfeldt
             return jsonString;
         }
 
+        /// <summary>
+        /// Serializes a pipeline PSObject for recreation in the PowerShell 7 child process
+        /// </summary>
+        private string SerializePipelineObject(PSObject psobject)
+        {
+            if (psobject == null)
+                return "$null";
+
+            try
+            {
+                // Handle different types of objects
+                var baseObject = psobject.BaseObject;
+                
+                if (baseObject == null)
+                {
+                    return "$null";
+                }
+                
+                // For hashtables, serialize as hashtable literal
+                if (baseObject is System.Collections.Hashtable hashtable)
+                {
+                    var items = new List<string>();
+                    foreach (System.Collections.DictionaryEntry entry in hashtable)
+                    {
+                        string key = entry.Key?.ToString() ?? "null";
+                        string value = ConvertToLiteral(entry.Value);
+                        items.Add($"'{key}' = {value}");
+                    }
+                    return $"@{{ {string.Join("; ", items)} }}";
+                }
+                
+                // For PSCustomObject or objects with properties, create a hashtable representation
+                var properties = psobject.Properties;
+                if (properties != null && properties.Any())
+                {
+                    var propItems = new List<string>();
+                    foreach (var prop in properties)
+                    {
+                        try
+                        {
+                            string propName = prop.Name;
+                            object propValue = prop.Value;
+                            string serializedValue = ConvertToLiteral(propValue);
+                            propItems.Add($"'{propName}' = {serializedValue}");
+                        }
+                        catch (Exception propEx)
+                        {
+                            Tracer.TraceWarning("pipeline-object-property-serialization-failed: {0}, error: {1}", 0, prop.Name, propEx.Message);
+                            // Skip problematic properties
+                        }
+                    }
+                    
+                    if (propItems.Count > 0)
+                    {
+                        // Create a PSCustomObject from hashtable
+                        return $"[PSCustomObject]@{{ {string.Join("; ", propItems)} }}";
+                    }
+                }
+                
+                // Handle arrays and collections (multivalues)
+                if (baseObject is System.Collections.IEnumerable enumerable && !(baseObject is string))
+                {
+                    var items = new List<string>();
+                    foreach (var item in enumerable)
+                    {
+                        items.Add(ConvertToLiteral(item));
+                    }
+                    return $"@({string.Join(", ", items)})";
+                }
+                
+                // Handle DateTime objects specifically
+                if (baseObject is DateTime dateTime)
+                {
+                    return $"[DateTime]'{dateTime:yyyy-MM-ddTHH:mm:ss.fffffffK}'";
+                }
+                
+                // Handle Guid objects specifically
+                if (baseObject is Guid guid)
+                {
+                    return $"[Guid]'{guid}'";
+                }
+                
+                // For primitive types, use direct conversion
+                if (baseObject is string || baseObject is int || baseObject is long || 
+                    baseObject is double || baseObject is decimal || baseObject is bool)
+                {
+                    return ConvertToLiteral(baseObject);
+                }
+                
+                // Fallback: try to serialize as string
+                return ConvertToLiteral(baseObject.ToString());
+            }
+            catch (Exception ex)
+            {
+                Tracer.TraceWarning("pipeline-object-serialization-failed: {0}", 0, ex.Message);
+                // Return a string representation as fallback
+                return ConvertToLiteral(psobject.ToString());
+            }
+        }
+
         private string ConvertToLiteral(object value)
         {
             if (value == null)
@@ -3089,8 +3242,32 @@ namespace Granfeldt
             if (value is bool boolean)
                 return boolean ? "$true" : "$false";
                 
-            if (value is int || value is long || value is double || value is decimal)
+            if (value is int || value is long || value is double || value is decimal || value is float)
                 return value.ToString();
+                
+            if (value is DateTime dateTime)
+                return $"[DateTime]'{dateTime:yyyy-MM-ddTHH:mm:ss.fffffffK}'";
+                
+            if (value is Guid guid)
+                return $"[Guid]'{guid}'";
+                
+            if (value is byte[] byteArray)
+                return $"[byte[]]@({string.Join(", ", byteArray.Select(b => b.ToString()))})";
+                
+            // Handle arrays and collections
+            if (value is System.Collections.IEnumerable enumerable && !(value is string))
+            {
+                var items = new List<string>();
+                foreach (var item in enumerable)
+                {
+                    items.Add(ConvertToLiteral(item));
+                }
+                return $"@({string.Join(", ", items)})";
+            }
+                
+            // Handle enums
+            if (value is Enum enumValue)
+                return $"[{value.GetType().FullName}]::{enumValue}";
                 
             // For complex objects, convert to string representation
             return $"'{value.ToString().Replace("'", "''")}'";
