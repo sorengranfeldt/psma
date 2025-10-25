@@ -1,0 +1,252 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build PSMA Solution",
+			"type": "shell",
+			"command": "dotnet build \"Granfeldt.PowerShell.ManagementAgent.sln\" --configuration Release --verbosity normal",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA Solution with MSBuild",
+			"type": "shell",
+			"command": "msbuild \"Granfeldt.PowerShell.ManagementAgent.sln\" /p:Configuration=Release /p:Platform=\"Any CPU\" /v:normal",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with Visual Studio MSBuild",
+			"type": "shell",
+			"command": "& \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" \"Granfeldt.PowerShell.ManagementAgent.sln\" /p:Configuration=Release /p:Platform=\"Any CPU\" /v:normal",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with Windows PowerShell",
+			"type": "shell",
+			"command": "powershell.exe -Command \"& 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe' 'Granfeldt.PowerShell.ManagementAgent.sln' /p:Configuration=Release /p:Platform='Any CPU' /v:normal\"",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Find MSBuild",
+			"type": "shell",
+			"command": "Get-ChildItem -Path 'C:\\Program Files*' -Filter 'MSBuild.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object FullName",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with Batch Script",
+			"type": "shell",
+			"command": ".\\build.bat",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Find PowerShell Assembly",
+			"type": "shell",
+			"command": "powershell.exe -ExecutionPolicy Bypass -File find-powershell-assembly.ps1",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with NuGet Package",
+			"type": "shell",
+			"command": "dotnet build Granfeldt.PowerShell.ManagementAgent.sln --configuration Release --verbosity normal",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with PowerShell 5 Reference",
+			"type": "shell",
+			"command": "dotnet build Granfeldt.PowerShell.ManagementAgent.sln --configuration Release --verbosity normal",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with MSBuild 2022",
+			"type": "shell",
+			"command": ".\\build-msbuild.bat",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with MSBuild Fixed",
+			"type": "shell",
+			"command": ".\\build-msbuild.bat",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA with PowerShell Standard",
+			"type": "shell",
+			"command": ".\\build-msbuild.bat",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA Fixed Issues",
+			"type": "shell",
+			"command": ".\\build-msbuild.bat",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build PSMA",
+			"type": "shell",
+			"command": "build-msbuild.bat",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Test PSMA Backward Compatibility",
+			"type": "shell",
+			"command": "powershell.exe -ExecutionPolicy Bypass -File Test-PSMABackwardCompatibility.ps1",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Clean Build Directories",
+			"type": "shell",
+			"command": "Remove-Item -Path 'Granfeldt.PowerShell.ManagementAgent\\bin', 'Granfeldt.PowerShell.ManagementAgent\\obj' -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned bin and obj directories'",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Deep Clean",
+			"type": "shell",
+			"command": "Get-ChildItem -Path . -Recurse -Directory -Name -Include bin,obj | ForEach-Object { Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue }; nuget restore; Write-Host 'Clean complete'",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Complete Clean and Rebuild",
+			"type": "shell",
+			"command": "Remove-Item -Path 'Granfeldt.PowerShell.ManagementAgent\\bin', 'Granfeldt.PowerShell.ManagementAgent\\obj' -Recurse -Force -ErrorAction SilentlyContinue; Get-ChildItem -Path . -Recurse -Directory -Name -Include bin,obj | ForEach-Object { Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue }; Write-Host 'Clean complete'; .\\build-msbuild.bat"
+		},
+		{
+			"label": "Restore NuGet Packages",
+			"type": "shell",
+			"command": "dotnet restore Granfeldt.PowerShell.ManagementAgent.sln"
+		},
+		{
+			"label": "Restore NuGet Packages with packages.config",
+			"type": "shell",
+			"command": "dotnet restore Granfeldt.PowerShell.ManagementAgent.sln"
+		},
+		{
+			"label": "Restore NuGet Packages with nuget.exe",
+			"type": "shell",
+			"command": "nuget.exe restore Granfeldt.PowerShell.ManagementAgent.sln"
+		},
+		{
+			"label": "Restore using MSBuild",
+			"type": "shell",
+			"command": "msbuild Granfeldt.PowerShell.ManagementAgent.sln /t:Restore"
+		},
+		{
+			"label": "Find PowerShell Standard Library",
+			"type": "shell",
+			"command": "Get-ChildItem -Path . -Recurse -Name | Where-Object { $_ -like '*PowerShellStandard*' }"
+		},
+		{
+			"label": "Find System.Management.Automation in GAC",
+			"type": "shell",
+			"command": "Get-ChildItem -Path \"C:\\Windows\\Microsoft.NET\\assembly\\GAC_MSIL\" -Name | Where-Object { $_ -like '*System.Management.Automation*' }"
+		},
+		{
+			"label": "Get System.Management.Automation version",
+			"type": "shell",
+			"command": "Get-ChildItem -Path \"C:\\Windows\\Microsoft.NET\\assembly\\GAC_MSIL\\System.Management.Automation\" -Recurse -Directory | Select-Object Name"
+		},
+		{
+			"label": "Build with System.Management.Automation GAC reference",
+			"type": "shell",
+			"command": ".\\build-msbuild.bat"
+		},
+		{
+			"label": "Remove old test script",
+			"type": "shell",
+			"command": "Remove-Item -Path 'Test-PSMABackwardCompatibility.ps1' -Force"
+		},
+		{
+			"label": "Run comprehensive backward compatibility test",
+			"type": "shell",
+			"command": ".\\Test-PSMABackwardCompatibility.ps1"
+		},
+		{
+			"label": "Run backward compatibility test with Windows PowerShell",
+			"type": "shell",
+			"command": "powershell.exe -ExecutionPolicy Bypass -File .\\Test-PSMABackwardCompatibility.ps1"
+		},
+		{
+			"label": "Run backward compatibility test with PowerShell 7",
+			"type": "shell",
+			"command": "pwsh.exe -ExecutionPolicy Bypass -File .\\Test-PSMABackwardCompatibility.ps1"
+		},
+		{
+			"label": "Check if PSMA DLL exists",
+			"type": "shell",
+			"command": "Test-Path '.\\Granfeldt.PowerShell.ManagementAgent\\bin\\Release\\Granfeldt.PowerShell.ManagementAgent.dll'"
+		},
+		{
+			"label": "Test Windows PowerShell basic functionality",
+			"type": "shell",
+			"command": "powershell.exe -NoProfile -NonInteractive -Command \"Write-Host 'Windows PowerShell works!'; $PSVersionTable.PSVersion.ToString(); $PSVersionTable.PSEdition\""
+		},
+		{
+			"label": "Test actual Windows PowerShell 5.1",
+			"type": "shell",
+			"command": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -NoProfile -NonInteractive -Command \"Write-Host 'Windows PowerShell 5.1 works!'; $PSVersionTable.PSVersion.ToString(); $PSVersionTable.PSEdition\""
+		},
+		{
+			"label": "Test PSMA DLL loading in current PowerShell",
+			"type": "shell",
+			"command": "Add-Type -Path '.\\Granfeldt.PowerShell.ManagementAgent\\bin\\Release\\Granfeldt.PowerShell.ManagementAgent.dll'; Write-Host 'PSMA DLL loaded successfully in PowerShell:' $PSVersionTable.PSVersion"
+		},
+		{
+			"label": "Test PSMA DLL loading",
+			"type": "shell",
+			"command": "Write-Host 'Testing PSMA DLL loading...'; Add-Type -Path '.\\Granfeldt.PowerShell.ManagementAgent\\bin\\Release\\Granfeldt.PowerShell.ManagementAgent.dll'; Write-Host 'Success! PSMA loaded in PowerShell' $PSVersionTable.PSVersion"
+		},
+		{
+			"label": "Test PSMA engine abstraction",
+			"type": "shell",
+			"command": ".\\Test-PSMAEngines.ps1"
+		},
+		{
+			"label": "Test PSMA engine abstraction with correct strings",
+			"type": "shell",
+			"command": ".\\Test-PSMAEngines.ps1"
+		},
+		{
+			"label": "Run final PSMA validation",
+			"type": "shell",
+			"command": ".\\Test-PSMAFinalValidation.ps1"
+		},
+		{
+			"label": "Delete generic PowerShell test script",
+			"type": "shell",
+			"command": "Remove-Item -Path 'Test-PowerShellEngines.ps1' -Force"
+		}
+	]
+}
