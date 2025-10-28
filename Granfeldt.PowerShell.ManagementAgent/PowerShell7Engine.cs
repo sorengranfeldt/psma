@@ -653,12 +653,12 @@ namespace Granfeldt
                         stdinContent.AppendLine("# Session variables");
                         foreach (var variable in sessionVariables)
                         {
-                            stdinContent.AppendLine($"$global:{variable.Key} = {ConvertToLiteral(variable.Value)}");
+                            stdinContent.AppendLine("$global:" + variable.Key + " = " + ConvertToLiteral(variable.Value));
                         }
                         stdinContent.AppendLine("");
                     }
                     
-                    // CRITICAL FIX: Inject pipeline input objects as $input variable
+                    // FIX: Inject pipeline input objects as $input variable
                     if (pipelineInput != null && pipelineInput.Count > 0)
                     {
                         stdinContent.AppendLine("# Pipeline input objects serialization");
@@ -676,7 +676,7 @@ namespace Granfeldt
                                     // Serialize each pipeline object to recreate it in the child process
                                     string serializedObject = SerializePipelineObject(psobject);
                                     stdinContent.AppendLine($"# Pipeline object {objectIndex}");
-                                    stdinContent.AppendLine($"$pipelineObjects += {serializedObject}");
+                                    stdinContent.AppendLine("$pipelineObjects += " + serializedObject);
                                     Tracer.TraceInformation("powershell7-pipeline-object-serialized: {0} (length: {1})", objectIndex, serializedObject.Length);
                                 }
                                 catch (Exception ex)
@@ -719,8 +719,8 @@ namespace Granfeldt
                             if (param.Value != null)
                             {
                                 string escapedValue = EscapeParameterValue(param.Value);
-                                stdinContent.AppendLine($"# Parameter: {param.Name}");
-                                stdinContent.AppendLine($"${param.Name} = {escapedValue}");
+                                stdinContent.AppendLine("# Parameter: " + param.Name);
+                                stdinContent.AppendLine("$" + param.Name + " = " + escapedValue);
                                 Tracer.TraceInformation("stdin-parameter-defined: -{0} (length: {1})", param.Name, escapedValue.Length);
                             }
                             else
@@ -728,14 +728,14 @@ namespace Granfeldt
                                 // Check if this is a credential/password parameter that should be null, not a switch
                                 if (param.Name.Contains("Password") || param.Name.Contains("Credential"))
                                 {
-                                    stdinContent.AppendLine($"# Null credential parameter: {param.Name}");
-                                    stdinContent.AppendLine($"${param.Name} = $null");
+                                    stdinContent.AppendLine("# Null credential parameter: " + param.Name);
+                                    stdinContent.AppendLine("$" + param.Name + " = $null");
                                     Tracer.TraceInformation("stdin-null-credential-parameter-defined: -{0}", param.Name);
                                 }
                                 else
                                 {
-                                    stdinContent.AppendLine($"# Switch parameter: {param.Name}");
-                                    stdinContent.AppendLine($"${param.Name} = $true");
+                                    stdinContent.AppendLine("# Switch parameter: " + param.Name);
+                                    stdinContent.AppendLine("$" + param.Name + " = $true");
                                     Tracer.TraceInformation("stdin-switch-parameter-defined: -{0}", param.Name);
                                 }
                             }
@@ -743,24 +743,76 @@ namespace Granfeldt
                     }
                     
                     stdinContent.AppendLine("");
-                    stdinContent.AppendLine($"# Execute the actual script using call operator: {scriptPath}");
+                    stdinContent.AppendLine($"# Execute the actual script using call operator with pipeline objects: {scriptPath}");
                     
                     // Build the call operator command with all parameters as variables
                     var scriptInvocation = new StringBuilder();
-                    scriptInvocation.Append($"& \"{scriptPath}\"");
+                    scriptInvocation.Append("& \"" + scriptPath + "\"");
                     
                     // Add all parameters as variables (no command line length limits with stdin)
                     if (parameters != null)
                     {
                         foreach (var param in parameters)
                         {
-                            scriptInvocation.Append($" -{param.Name} ${param.Name}");
+                            scriptInvocation.Append(" -" + param.Name + " $" + param.Name);
                         }
                     }
                     
-                    // Wrap script execution to capture and properly format output objects
+                    // FIX: Execute script with pipeline objects piped to it
+                    // PowerShell 7 requires transformation of BEGIN/PROCESS/END blocks to work with pipeline input
                     stdinContent.AppendLine("$allOutput = & {");
-                    stdinContent.AppendLine("    " + scriptInvocation.ToString());
+                    if (pipelineInput != null && pipelineInput.Count > 0)
+                    {
+                        stdinContent.AppendLine("    # Read and transform user script to work with PowerShell 7 pipeline");
+                        stdinContent.AppendLine("    $userScriptContent = Get-Content -Path '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "' -Raw");
+                        stdinContent.AppendLine("    ");
+                        stdinContent.AppendLine("    # Extract BEGIN, PROCESS, and END blocks using improved regex");
+                        stdinContent.AppendLine("    # Match BEGIN/PROCESS/END keywords with optional whitespace and braces");
+                        stdinContent.AppendLine("    $beginMatch = [regex]::Match($userScriptContent, '(?si)\\bBEGIN\\s*\\{')");
+                        stdinContent.AppendLine("    $processMatch = [regex]::Match($userScriptContent, '(?si)\\bPROCESS\\s*\\{')");  
+                        stdinContent.AppendLine("    $endMatch = [regex]::Match($userScriptContent, '(?si)\\bEND\\s*\\{')");
+                        stdinContent.AppendLine("    ");
+                        stdinContent.AppendLine("    # Debug: Log what was detected");
+                        stdinContent.AppendLine("    Write-Host \"DEBUG: BEGIN detected: $($beginMatch.Success)\"");
+                        stdinContent.AppendLine("    Write-Host \"DEBUG: PROCESS detected: $($processMatch.Success)\"");
+                        stdinContent.AppendLine("    Write-Host \"DEBUG: END detected: $($endMatch.Success)\"");
+                        stdinContent.AppendLine("    ");
+                        stdinContent.AppendLine("    # If script has BEGIN/PROCESS/END structure, execute it properly");
+                        stdinContent.AppendLine("    if ($beginMatch.Success -and $processMatch.Success) {");
+                        stdinContent.AppendLine("        Write-Host \"DEBUG: Using structured BEGIN/PROCESS/END execution\"");
+                        stdinContent.AppendLine("        # For structured scripts, pipe objects directly to the script");
+                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("    }");
+                        stdinContent.AppendLine("    ");
+                        stdinContent.AppendLine("    elseif ($processMatch.Success) {");
+                        stdinContent.AppendLine("        Write-Host \"DEBUG: Script has PROCESS block but no BEGIN - executing with pipeline\"");
+                        stdinContent.AppendLine("        # Script has PROCESS but no BEGIN - still pipe to it");
+                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("    } else {");
+                        stdinContent.AppendLine("        Write-Host \"DEBUG: No structured blocks detected - executing script for each object with dot sourcing\"");
+                        stdinContent.AppendLine("        # No structured blocks detected, execute script for each object");
+                        stdinContent.AppendLine("        $pipelineObjects | ForEach-Object {");
+                        stdinContent.AppendLine("            $currentObject = $_");
+                        stdinContent.AppendLine("            & { ");
+                        stdinContent.AppendLine("                param($currentObj, $scriptPath)");
+                        stdinContent.AppendLine("                $_ = $currentObj");
+                        stdinContent.AppendLine("                # Use dot sourcing instead of Invoke-Expression for complex scripts");
+                        stdinContent.AppendLine("                . $scriptPath");
+                        stdinContent.AppendLine("            } $currentObject '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("        }");
+                        stdinContent.AppendLine("    }");
+                        stdinContent.AppendLine("    ");
+                        stdinContent.AppendLine("    # Execute END block once if it exists");
+                        stdinContent.AppendLine("    if ($endMatch.Success) {");
+                        stdinContent.AppendLine("        $endCode = $endMatch.Groups[1].Value");
+                        stdinContent.AppendLine("        Invoke-Expression $endCode");
+                        stdinContent.AppendLine("    }");
+                    }
+                    else
+                    {
+                        stdinContent.AppendLine("    # No pipeline objects - execute script directly");
+                        stdinContent.AppendLine("    " + scriptInvocation.ToString());
+                    }
                     stdinContent.AppendLine("}");
                     stdinContent.AppendLine("");
                     stdinContent.AppendLine("# Convert all output objects to consistent format for parsing");
@@ -1563,6 +1615,129 @@ namespace Granfeldt
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Builds a detailed exception message from PowerShell 7 out-of-process execution errors
+        /// This method converts PowerShell script errors to proper exception messages for marshalling
+        /// </summary>
+        private static string BuildPowerShell7ExceptionMessage(int exitCode, string stderr, string stdout)
+        {
+            // Start with basic error information
+            var sb = new StringBuilder();
+            sb.AppendLine("PowerShell 7 script execution failed:");
+            
+            // Parse stderr for PowerShell exception information
+            if (!string.IsNullOrEmpty(stderr))
+            {
+                string[] stderrLines = stderr.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                string exceptionType = null;
+                string exceptionMessage = null;
+                string scriptLocation = null;
+                string stackTrace = null;
+                
+                foreach (string line in stderrLines)
+                {
+                    string trimmedLine = line.Trim();
+                    
+                    // Look for PowerShell exception patterns
+                    if (trimmedLine.Contains("Exception calling") || trimmedLine.Contains("Exception:"))
+                    {
+                        exceptionMessage = trimmedLine;
+                    }
+                    else if (trimmedLine.Contains("At line:") || trimmedLine.Contains("At "))
+                    {
+                        scriptLocation = trimmedLine;
+                    }
+                    else if (trimmedLine.Contains("CategoryInfo") && trimmedLine.Contains("FullyQualifiedErrorId"))
+                    {
+                        // Extract exception type from CategoryInfo if available
+                        var categoryMatch = System.Text.RegularExpressions.Regex.Match(trimmedLine, @"CategoryInfo\s*:\s*\w+:\s*\(\s*[^)]*\)\s*\[\s*([^,\]]+)");
+                        if (categoryMatch.Success)
+                        {
+                            exceptionType = categoryMatch.Groups[1].Value;
+                        }
+                    }
+                    else if (trimmedLine.Contains("FullyQualifiedErrorId"))
+                    {
+                        // Additional error identification
+                        stackTrace = trimmedLine;
+                    }
+                    else if (trimmedLine.Contains("RuntimeException") || trimmedLine.Contains("TerminatingErrorException"))
+                    {
+                        exceptionType = trimmedLine;
+                    }
+                }
+                
+                // Build comprehensive error message
+                if (!string.IsNullOrEmpty(exceptionMessage))
+                {
+                    sb.AppendLine($"Error: {exceptionMessage}");
+                }
+                else
+                {
+                    // Fallback to first non-empty stderr line
+                    string firstError = stderrLines.FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
+                    if (!string.IsNullOrEmpty(firstError))
+                    {
+                        sb.AppendLine($"Error: {firstError.Trim()}");
+                    }
+                }
+                
+                if (!string.IsNullOrEmpty(exceptionType))
+                {
+                    sb.AppendLine($"Exception Type: {exceptionType}");
+                }
+                
+                if (!string.IsNullOrEmpty(scriptLocation))
+                {
+                    sb.AppendLine($"Location: {scriptLocation}");
+                }
+                
+                if (!string.IsNullOrEmpty(stackTrace))
+                {
+                    sb.AppendLine($"Stack Trace: {stackTrace}");
+                }
+            }
+            
+            // Add exit code information
+            uint unsignedCode = unchecked((uint)exitCode);
+            string hexCode = $"0x{unsignedCode:X8}";
+            string knownName = GetKnownStatusName(unsignedCode);
+            
+            sb.AppendLine($"Exit Code: {exitCode} ({hexCode})");
+            if (!string.IsNullOrEmpty(knownName))
+            {
+                sb.AppendLine($"Status: {knownName}");
+            }
+            
+            // Add stdout information if it contains error context
+            if (!string.IsNullOrEmpty(stdout))
+            {
+                // Check if stdout contains error information
+                if (stdout.ToLowerInvariant().Contains("error") || 
+                    stdout.ToLowerInvariant().Contains("exception") ||
+                    stdout.ToLowerInvariant().Contains("failed"))
+                {
+                    string[] stdoutLines = stdout.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    var errorLines = stdoutLines.Where(l => 
+                        l.ToLowerInvariant().Contains("error") || 
+                        l.ToLowerInvariant().Contains("exception") ||
+                        l.ToLowerInvariant().Contains("failed")).Take(3);
+                    
+                    if (errorLines.Any())
+                    {
+                        sb.AppendLine("Additional Output:");
+                        foreach (string errorLine in errorLines)
+                        {
+                            sb.AppendLine($"  {errorLine.Trim()}");
+                        }
+                    }
+                }
+            }
+            
+            return sb.ToString().TrimEnd();
+        }
+
         private static string SummarizeStream(string content, string label)
         {
             if (string.IsNullOrWhiteSpace(content))
@@ -1845,6 +2020,15 @@ namespace Granfeldt
                     result.Success = false;
                     result.ErrorMessage = result.ExitCodeDescription;
                     Tracer.TraceError("processstartinfo-execution-failed exit-code-detail: {0}", 0, EscapeForTrace(result.ExitCodeDescription));
+                    
+                    // FIX: Convert PowerShell 7 script errors to exceptions for proper marshalling
+                    // This ensures compatibility with ECMA/MIM engine exception handling expectations
+                    string exceptionMessage = BuildPowerShell7ExceptionMessage(process.ExitCode, error, output);
+                    Tracer.TraceError("powershell7-script-exception-detected: {0}", 0, EscapeForTrace(exceptionMessage));
+                    
+                    // Throw a RuntimeException to match Windows PowerShell 5.1 behavior
+                    // This allows the ECMA/MIM engine to properly catch and handle script errors
+                    throw new System.Management.Automation.RuntimeException(exceptionMessage);
                 }
             }
             catch (Exception ex)
@@ -2472,32 +2656,32 @@ namespace Granfeldt
                 // Create PowerShell Job that executes PowerShell 7
                 using (var powershell = PowerShell.Create())
                 {
-                    powershell.AddScript($@"
-                        try {{
-                            $job = Start-Job -ScriptBlock {{
+                    powershell.AddScript(@"
+                        try {
+                            $job = Start-Job -ScriptBlock {
                                 param($ps7Path, $stdinScript)
                                 $stdinScript | & $ps7Path -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command -
-                            }} -ArgumentList 'C:\Program Files\PowerShell\7\pwsh.exe', @'
-{stdinContent}
+                            } -ArgumentList 'C:\Program Files\PowerShell\7\pwsh.exe', @'
+" + stdinContent + @"
 '@ -Credential $using:credential
 
                             $job | Wait-Job -Timeout 300 | Out-Null
                             
-                            if ($job.State -eq 'Completed') {{
+                            if ($job.State -eq 'Completed') {
                                 $output = $job | Receive-Job
                                 $job | Remove-Job -Force
-                                return @{{ Success = $true; Output = $output; ExitCode = 0 }}
-                            }} elseif ($job.State -eq 'Failed') {{
+                                return @{ Success = $true; Output = $output; ExitCode = 0 }
+                            } elseif ($job.State -eq 'Failed') {
                                 $error = $job.ChildJobs[0].Error | Out-String
                                 $job | Remove-Job -Force  
-                                return @{{ Success = $false; Output = $null; ExitCode = 1; Error = $error }}
-                            }} else {{
+                                return @{ Success = $false; Output = $null; ExitCode = 1; Error = $error }
+                            } else {
                                 $job | Stop-Job -PassThru | Remove-Job -Force
-                                return @{{ Success = $false; Output = $null; ExitCode = 2; Error = 'Job timed out or failed to complete' }}
-                            }}
-                        }} catch {{
-                            return @{{ Success = $false; Output = $null; ExitCode = 3; Error = $_.Exception.Message }}
-                        }}
+                                return @{ Success = $false; Output = $null; ExitCode = 2; Error = 'Job timed out or failed to complete' }
+                            }
+                        } catch {
+                            return @{ Success = $false; Output = $null; ExitCode = 3; Error = $_.Exception.Message }
+                        }
                     ");
                     
                     var jobResults = powershell.Invoke();
@@ -2598,6 +2782,34 @@ namespace Granfeldt
             if (value is int || value is long || value is double || value is decimal || value is float)
                 return value.ToString();
             
+            // Check for hashtables and collections BEFORE PSObject to handle them correctly
+            if (value is System.Collections.IDictionary hashtable)
+            {
+                Tracer.TraceInformation("hashtable-serialization: converting IDictionary with {0} entries", hashtable.Count);
+                var items = new List<string>();
+                foreach (System.Collections.DictionaryEntry entry in hashtable)
+                {
+                    string escapedValue = EscapeParameterValue(entry.Value);
+                    Tracer.TraceInformation("hashtable-entry-debug: key='{0}', value-type='{1}', value='{2}', escaped='{3}'", 
+                        entry.Key ?? "(null)", 
+                        entry.Value?.GetType().Name ?? "(null)", 
+                        entry.Value ?? "(null)", 
+                        escapedValue ?? "(null)");
+                        
+                    // Ensure we never generate malformed hashtable syntax like "key="
+                    if (string.IsNullOrEmpty(escapedValue) || escapedValue.Trim() == "")
+                    {
+                        escapedValue = "\"\"";  // Always use empty string for any empty/null values
+                        Tracer.TraceInformation("hashtable-fixed-empty-value: key='{0}', fixed-to='{1}'", entry.Key, escapedValue);
+                    }
+                    
+                    // FIX: Properly escape hashtable keys that contain special PowerShell characters
+                    string keyName = EscapePropertyName(entry.Key?.ToString() ?? "null");
+                    items.Add(keyName + " = " + escapedValue);
+                }
+                return "@{" + string.Join("; ", items) + "}";
+            }
+            
             // Handle PSObject specifically 
             if (value is PSObject psObject)
             {
@@ -2621,39 +2833,21 @@ namespace Granfeldt
                             escapedValue = "\"\"";  // Always use empty string for any empty/null values
                             Tracer.TraceInformation("psobject-fixed-empty-value: name='{0}', fixed-to='{1}'", property.Name, escapedValue);
                         }
-                        items.Add($"{property.Name}={escapedValue}");
+                        
+                        // FIX: Properly escape property names that contain special PowerShell characters
+                        string propertyName = EscapePropertyName(property.Name);
+                        items.Add(propertyName + " = " + escapedValue);  // Use space around = for better readability
                     }
                     catch (Exception ex)
                     {
                         Tracer.TraceWarning("psobject-property-error: name='{0}', error='{1}'", 0, property.Name, ex.Message);
-                        items.Add($"{property.Name}=\"\"");  // Fallback to empty string for problematic properties
+                        string safePropertyName = EscapePropertyName(property.Name);
+                        items.Add(safePropertyName + " = \"\"");  // Fallback to empty string for problematic properties
                     }
                 }
-                return $"@{{{string.Join("; ", items)}}}";
-            }
-            
-            // For collections, try to serialize as PowerShell array or hashtable
-            if (value is System.Collections.IDictionary dict)
-            {
-                var items = new List<string>();
-                foreach (System.Collections.DictionaryEntry entry in dict)
-                {
-                    string escapedValue = EscapeParameterValue(entry.Value);
-                    Tracer.TraceInformation("hashtable-entry-debug: key='{0}', value-type='{1}', value='{2}', escaped='{3}'", 
-                        entry.Key ?? "(null)", 
-                        entry.Value?.GetType().Name ?? "(null)", 
-                        entry.Value ?? "(null)", 
-                        escapedValue ?? "(null)");
-                        
-                    // Ensure we never generate malformed hashtable syntax like "key="
-                    if (string.IsNullOrEmpty(escapedValue) || escapedValue.Trim() == "")
-                    {
-                        escapedValue = "\"\"";  // Always use empty string for any empty/null values
-                        Tracer.TraceInformation("hashtable-fixed-empty-value: key='{0}', fixed-to='{1}'", entry.Key, escapedValue);
-                    }
-                    items.Add($"{entry.Key}={escapedValue}");
-                }
-                return $"@{{{string.Join("; ", items)}}}";
+                
+                // Create a PSCustomObject from the hashtable to maintain object type
+                return "[PSCustomObject]@{ " + string.Join("; ", items) + " }";
             }
             
             if (value is System.Collections.IEnumerable enumerable && !(value is string))
@@ -2683,21 +2877,31 @@ namespace Granfeldt
                         // Use reflection to get Name and DataType properties
                         var nameProperty = value.GetType().GetProperty("Name");
                         var dataTypeProperty = value.GetType().GetProperty("DataType");
+                        var isMultiValuedProperty = value.GetType().GetProperty("IsMultiValued");
+                        var isAnchorProperty = value.GetType().GetProperty("IsAnchor");
                         
                         string name = nameProperty?.GetValue(value)?.ToString() ?? "Unknown";
                         string dataType = dataTypeProperty?.GetValue(value)?.ToString() ?? "String";
+                        bool isMultiValued = isMultiValuedProperty?.GetValue(value) as bool? ?? false;
+                        bool isAnchor = isAnchorProperty?.GetValue(value) as bool? ?? false;
                         
-                        return $"@{{Name='{name}'; DataType='{dataType}'}}";
+                        // Use proper property name escaping for the hashtable
+                        string nameKey = EscapePropertyName("Name");
+                        string dataTypeKey = EscapePropertyName("DataType");
+                        string multiValuedKey = EscapePropertyName("IsMultiValued");
+                        string anchorKey = EscapePropertyName("IsAnchor");
+                        
+                        return "@{" + nameKey + "='" + name + "'; " + dataTypeKey + "='" + dataType + "'; " + multiValuedKey + "=$" + (isMultiValued ? "true" : "false") + "; " + anchorKey + "=$" + (isAnchor ? "true" : "false") + "}";
                     }
                     catch (Exception ex)
                     {
                         Tracer.TraceWarning("failed-to-extract-schema-attribute-info: {0}", 0, ex.Message);
-                        return "@{Name='Unknown'; DataType='String'}";
+                        return "@{Name='Unknown'; DataType='String'; IsMultiValued=$false; IsAnchor=$false}";
                     }
                 }
                 
                 // For other MetadirectoryServices objects, return a simple placeholder
-                return $"@{{Type='{value.GetType().Name}'}}";
+                return "@{Type='" + value.GetType().Name + "'}";
             }
             
             // If it looks like a type name, treat it as an empty string to avoid command line issues
@@ -3155,39 +3359,76 @@ namespace Granfeldt
                     var items = new List<string>();
                     foreach (System.Collections.DictionaryEntry entry in hashtable)
                     {
-                        string key = entry.Key?.ToString() ?? "null";
+                        string key = EscapePropertyName(entry.Key?.ToString() ?? "null");
                         string value = ConvertToLiteral(entry.Value);
-                        items.Add($"'{key}' = {value}");
+                        items.Add(key + " = " + value);
                     }
-                    return $"@{{ {string.Join("; ", items)} }}";
+                    return "@{ " + string.Join("; ", items) + " }";
                 }
                 
                 // For PSCustomObject or objects with properties, create a hashtable representation
-                var properties = psobject.Properties;
-                if (properties != null && properties.Any())
+                // Use Members collection to capture ALL properties including control properties like [ObjectModificationType]
+                var propItems = new List<string>();
+                
+                // First, try to get all members (this includes NoteProperties added by PSMA)
+                foreach (var member in psobject.Members)
                 {
-                    var propItems = new List<string>();
-                    foreach (var prop in properties)
+                    try
                     {
-                        try
+                        // Only process properties and note properties (not methods, scripts, etc.)
+                        if (member.MemberType == PSMemberTypes.Property || 
+                            member.MemberType == PSMemberTypes.NoteProperty ||
+                            member.MemberType == PSMemberTypes.ScriptProperty)
                         {
-                            string propName = prop.Name;
-                            object propValue = prop.Value;
+                            string propName = EscapePropertyName(member.Name);
+                            object propValue = member.Value;
                             string serializedValue = ConvertToLiteral(propValue);
-                            propItems.Add($"'{propName}' = {serializedValue}");
-                        }
-                        catch (Exception propEx)
-                        {
-                            Tracer.TraceWarning("pipeline-object-property-serialization-failed: {0}, error: {1}", 0, prop.Name, propEx.Message);
-                            // Skip problematic properties
+                            propItems.Add(propName + " = " + serializedValue);
+                            
+                            // Add debug tracing for control properties
+                            if (member.Name.StartsWith("[") && member.Name.EndsWith("]"))
+                            {
+                                Tracer.TraceInformation("pipeline-object-control-property: {0} = {1}", member.Name, member.Value);
+                            }
                         }
                     }
-                    
-                    if (propItems.Count > 0)
+                    catch (Exception memberEx)
                     {
-                        // Create a PSCustomObject from hashtable
-                        return $"[PSCustomObject]@{{ {string.Join("; ", propItems)} }}";
+                        Tracer.TraceWarning("pipeline-object-member-serialization-failed: {0}, error: {1}", 0, member.Name, memberEx.Message);
+                        // Skip problematic properties
                     }
+                }
+                
+                // Fallback: if Members didn't give us properties, try Properties collection
+                if (propItems.Count == 0)
+                {
+                    var properties = psobject.Properties;
+                    if (properties != null && properties.Any())
+                    {
+                        foreach (var prop in properties)
+                        {
+                            try
+                            {
+                                string propName = EscapePropertyName(prop.Name);
+                                object propValue = prop.Value;
+                                string serializedValue = ConvertToLiteral(propValue);
+                                propItems.Add(propName + " = " + serializedValue);
+                            }
+                            catch (Exception propEx)
+                            {
+                                Tracer.TraceWarning("pipeline-object-property-serialization-failed: {0}, error: {1}", 0, prop.Name, propEx.Message);
+                                // Skip problematic properties
+                            }
+                        }
+                    }
+                }
+                
+                if (propItems.Count > 0)
+                {
+                    // Create a PSCustomObject from hashtable
+                    var result = "[PSCustomObject]@{ " + string.Join("; ", propItems) + " }";
+                    Tracer.TraceInformation("pipeline-object-serialized-with-properties: count={0}, length={1}", propItems.Count, result.Length);
+                    return result;
                 }
                 
                 // Handle arrays and collections (multivalues)
@@ -3271,6 +3512,57 @@ namespace Granfeldt
                 
             // For complex objects, convert to string representation
             return $"'{value.ToString().Replace("'", "''")}'";
+        }
+
+        /// <summary>
+        /// Escapes property names that contain special PowerShell characters that would break hashtable syntax
+        /// This fixes the serialization issue with attribute names like "-dn-" in Schema objects
+        /// </summary>
+        private string EscapePropertyName(string propertyName)
+        {
+            if (string.IsNullOrEmpty(propertyName))
+                return "''";
+            
+            // PowerShell hashtable keys with special characters must be quoted
+            // Check for characters that require quoting in hashtable key names
+            if (propertyName.Contains("-") || 
+                propertyName.Contains(" ") || 
+                propertyName.Contains(".") ||
+                propertyName.Contains("@") ||
+                propertyName.Contains("#") ||
+                propertyName.Contains("$") ||
+                propertyName.Contains("%") ||
+                propertyName.Contains("^") ||
+                propertyName.Contains("&") ||
+                propertyName.Contains("*") ||
+                propertyName.Contains("(") ||
+                propertyName.Contains(")") ||
+                propertyName.Contains("+") ||
+                propertyName.Contains("=") ||
+                propertyName.Contains("{") ||
+                propertyName.Contains("}") ||
+                propertyName.Contains("[") ||
+                propertyName.Contains("]") ||
+                propertyName.Contains("\\") ||
+                propertyName.Contains("|") ||
+                propertyName.Contains(";") ||
+                propertyName.Contains(":") ||
+                propertyName.Contains("\"") ||
+                propertyName.Contains("'") ||
+                propertyName.Contains("<") ||
+                propertyName.Contains(">") ||
+                propertyName.Contains(",") ||
+                propertyName.Contains("?") ||
+                propertyName.Contains("/") ||
+                propertyName.StartsWith("_") ||
+                char.IsDigit(propertyName[0]))  // Property names starting with digits need quoting
+            {
+                // Quote the property name and escape internal single quotes
+                return $"'{propertyName.Replace("'", "''")}'";
+            }
+            
+            // Property name is safe to use unquoted
+            return propertyName;
         }
 
         public void SetVariable(string name, object value)
