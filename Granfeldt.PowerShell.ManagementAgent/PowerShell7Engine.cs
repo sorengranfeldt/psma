@@ -778,35 +778,39 @@ namespace Granfeldt
                         stdinContent.AppendLine("    Write-Host \"DEBUG: END detected: $($endMatch.Success)\"");
                         stdinContent.AppendLine("    ");
                         stdinContent.AppendLine("    # If script has BEGIN/PROCESS/END structure, execute it properly");
+                        
+                        // Build parameter list for structured script execution - must be outside the if blocks
+                        var parameterList = new StringBuilder();
+                        if (parameters != null)
+                        {
+                            foreach (var param in parameters)
+                            {
+                                parameterList.Append(" -" + param.Name + " $" + param.Name);
+                            }
+                        }
+                        
                         stdinContent.AppendLine("    if ($beginMatch.Success -and $processMatch.Success) {");
                         stdinContent.AppendLine("        Write-Host \"DEBUG: Using structured BEGIN/PROCESS/END execution\"");
-                        stdinContent.AppendLine("        # For structured scripts, pipe objects directly to the script");
-                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("        # For structured scripts, pipe objects directly to the script WITH PARAMETERS");
+                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'" + parameterList.ToString());
                         stdinContent.AppendLine("    }");
                         stdinContent.AppendLine("    ");
                         stdinContent.AppendLine("    elseif ($processMatch.Success) {");
-                        stdinContent.AppendLine("        Write-Host \"DEBUG: Script has PROCESS block but no BEGIN - executing with pipeline\"");
-                        stdinContent.AppendLine("        # Script has PROCESS but no BEGIN - still pipe to it");
-                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("        Write-Host \"DEBUG: Script has PROCESS block but no BEGIN - executing with pipeline AND PARAMETERS\"");
+                        stdinContent.AppendLine("        # Script has PROCESS but no BEGIN - still pipe to it WITH PARAMETERS");
+                        stdinContent.AppendLine("        $pipelineObjects | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'" + parameterList.ToString());
                         stdinContent.AppendLine("    } else {");
-                        stdinContent.AppendLine("        Write-Host \"DEBUG: No structured blocks detected - executing script for each object with dot sourcing\"");
-                        stdinContent.AppendLine("        # No structured blocks detected, execute script for each object");
+                        stdinContent.AppendLine("        Write-Host \"DEBUG: No structured blocks detected - executing script for each object WITH PARAMETERS\"");
+                        stdinContent.AppendLine("        # No structured blocks detected, execute script for each object with parameters");
                         stdinContent.AppendLine("        $pipelineObjects | ForEach-Object {");
                         stdinContent.AppendLine("            $currentObject = $_");
-                        stdinContent.AppendLine("            & { ");
-                        stdinContent.AppendLine("                param($currentObj, $scriptPath)");
-                        stdinContent.AppendLine("                $_ = $currentObj");
-                        stdinContent.AppendLine("                # Use dot sourcing instead of Invoke-Expression for complex scripts");
-                        stdinContent.AppendLine("                . $scriptPath");
-                        stdinContent.AppendLine("            } $currentObject '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'");
+                        stdinContent.AppendLine("            # Execute script with parameters and current pipeline object");
+                        stdinContent.AppendLine("            $currentObject | & '" + scriptPath.Replace("'", "''").Replace("\\", "\\\\") + "'" + parameterList.ToString());
                         stdinContent.AppendLine("        }");
                         stdinContent.AppendLine("    }");
                         stdinContent.AppendLine("    ");
-                        stdinContent.AppendLine("    # Execute END block once if it exists");
-                        stdinContent.AppendLine("    if ($endMatch.Success) {");
-                        stdinContent.AppendLine("        $endCode = $endMatch.Groups[1].Value");
-                        stdinContent.AppendLine("        Invoke-Expression $endCode");
-                        stdinContent.AppendLine("    }");
+                        stdinContent.AppendLine("    # NOTE: END block processing not implemented for out-of-process execution");
+                        stdinContent.AppendLine("    # END blocks are handled naturally by the PowerShell script execution");
                     }
                     else
                     {
@@ -2782,6 +2786,82 @@ namespace Granfeldt
             if (value is int || value is long || value is double || value is decimal || value is float)
                 return value.ToString();
             
+            // Handle PSCredential objects by recreating them in PowerShell
+            if (value is System.Management.Automation.PSCredential psCredential)
+            {
+                try
+                {
+                    Tracer.TraceInformation("pscredential-serialization: converting PSCredential for user '{0}'", psCredential.UserName);
+                    
+                    // Convert SecureString to plain text for transmission (will be converted back to SecureString in child process)
+                    string plainPassword = "";
+                    if (psCredential.Password != null)
+                    {
+                        IntPtr valuePtr = IntPtr.Zero;
+                        try
+                        {
+                            valuePtr = Marshal.SecureStringToGlobalAllocUnicode(psCredential.Password);
+                            plainPassword = Marshal.PtrToStringUni(valuePtr);
+                        }
+                        finally
+                        {
+                            if (valuePtr != IntPtr.Zero)
+                                Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+                        }
+                    }
+                    
+                    // Create PowerShell code to reconstruct the PSCredential object
+                    string escapedUsername = psCredential.UserName?.Replace("'", "''") ?? "";
+                    string escapedPassword = plainPassword?.Replace("'", "''") ?? "";
+                    
+                    // Generate code that recreates the PSCredential with a SecureString
+                    string credentialCode = $"(New-Object System.Management.Automation.PSCredential('{escapedUsername}', (ConvertTo-SecureString '{escapedPassword}' -AsPlainText -Force)))";
+                    
+                    Tracer.TraceInformation("pscredential-serialized: username='{0}', password-length={1}", escapedUsername, plainPassword?.Length ?? 0);
+                    return credentialCode;
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceError("pscredential-serialization-error: {0}", ex.Message);
+                    return "$null";
+                }
+            }
+            
+            // Handle SecureString objects by converting to PowerShell SecureString creation code
+            if (value is System.Security.SecureString secureString)
+            {
+                try
+                {
+                    Tracer.TraceInformation("securestring-serialization: converting SecureString");
+                    
+                    // Convert SecureString to plain text for transmission
+                    string plainText = "";
+                    IntPtr valuePtr = IntPtr.Zero;
+                    try
+                    {
+                        valuePtr = Marshal.SecureStringToGlobalAllocUnicode(secureString);
+                        plainText = Marshal.PtrToStringUni(valuePtr);
+                    }
+                    finally
+                    {
+                        if (valuePtr != IntPtr.Zero)
+                            Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+                    }
+                    
+                    // Create PowerShell code to recreate the SecureString
+                    string escapedText = plainText?.Replace("'", "''") ?? "";
+                    string secureStringCode = $"(ConvertTo-SecureString '{escapedText}' -AsPlainText -Force)";
+                    
+                    Tracer.TraceInformation("securestring-serialized: length={0}", plainText?.Length ?? 0);
+                    return secureStringCode;
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceError("securestring-serialization-error: {0}", ex.Message);
+                    return "$null";
+                }
+            }
+            
             // Check for hashtables and collections BEFORE PSObject to handle them correctly
             if (value is System.Collections.IDictionary hashtable)
             {
@@ -2813,6 +2893,19 @@ namespace Granfeldt
             // Handle PSObject specifically 
             if (value is PSObject psObject)
             {
+                // Check if the PSObject wraps a PSCredential or SecureString - handle those specially
+                if (psObject.BaseObject is System.Management.Automation.PSCredential psCredentialBase)
+                {
+                    Tracer.TraceInformation("psobject-wrapping-pscredential: unwrapping and handling as PSCredential");
+                    return EscapeParameterValue(psCredentialBase);
+                }
+                
+                if (psObject.BaseObject is System.Security.SecureString secureStringBase)
+                {
+                    Tracer.TraceInformation("psobject-wrapping-securestring: unwrapping and handling as SecureString");
+                    return EscapeParameterValue(secureStringBase);
+                }
+                
                 Tracer.TraceInformation("psobject-serialization: converting PSObject with {0} properties", psObject.Properties.Count());
                 
                 var items = new List<string>();
