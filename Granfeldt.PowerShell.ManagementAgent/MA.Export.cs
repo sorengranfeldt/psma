@@ -1,9 +1,4 @@
-﻿// july 5, 2018, soren granfeldt
-//  - added schema psobject as parameter to export script
-// march 27, 2024 | soren granfeldt
-//	- increased max export pagesize from 500 to 9999
-
-using Microsoft.MetadirectoryServices;
+﻿using Microsoft.MetadirectoryServices;
 using System;
 using System.Collections;
 using System.Collections.Generic;
