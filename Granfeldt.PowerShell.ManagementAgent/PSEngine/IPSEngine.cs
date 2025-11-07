@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Diagnostics;
 using System.Management.Automation;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,9 +10,8 @@ namespace Granfeldt
 {
     public interface IPSEngine : IDisposable
     {
-        void OpenRunspace();
-        void CloseRunspace();
-
+        void SetImpersonation(string domain, string username, string password);
+        
         void Start();
 
         // Invoke arbitrary script text; returns pipeline PSObjects.

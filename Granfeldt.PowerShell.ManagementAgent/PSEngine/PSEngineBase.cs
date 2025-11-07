@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +20,18 @@ public abstract class PSEngineBase : IPSEngine
     public event Action<string> Verbose;
     public event Action<ProgressRecord> Progress;
 
-    public void OpenRunspace() { }
-    public void CloseRunspace() { }
+    public string Domain = default;
+    public string Username = default;
+    public string Password = default;
+    public SecureString SecurePassword => Password != null ? new System.Net.NetworkCredential("", Password).SecurePassword : null;
+
+    public bool ShouldImpersonate() => !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrEmpty(Password);
+    public void SetImpersonation(string domain, string username, string password)
+    {
+        Domain = domain;
+        Username = username;
+        Password = password;
+    }
     public void Start()
     {
         if (_started) return;
@@ -49,7 +60,7 @@ public abstract class PSEngineBase : IPSEngine
     {
         ps.AddCommand(commandName);
         if (parameters != null) ps.AddParameters(parameters);
-        Tracer.TraceError($"invoke-command: {commandName}");
+        Tracer.TraceInformation($"invoke-command: {commandName}");
     }, pipelineInput);
 
     public Collection<PSObject> InvokeScript(string scriptText, IDictionary parameters = null, IEnumerable pipelineInput = null) => InvokeInternal(ps =>
@@ -134,18 +145,20 @@ public abstract class PSEngineBase : IPSEngine
         return ps;
     }
 
+    [Obsolete]
     private void PumpStreams(PowerShell ps)
     {
-        foreach (var w in ps.Streams.Warning) Warning?.Invoke(w.Message);
-        foreach (var v in ps.Streams.Verbose) Verbose?.Invoke(v.Message);
-        foreach (var pr in ps.Streams.Progress) Progress?.Invoke(pr);
-        foreach (var er in ps.Streams.Error) Error?.Invoke(er);
+        //foreach (var w in ps.Streams.Warning) Warning?.Invoke(w.Message);
+        //foreach (var v in ps.Streams.Verbose) Verbose?.Invoke(v.Message);
+        //foreach (var pr in ps.Streams.Progress) Progress?.Invoke(pr);
+        //foreach (var er in ps.Streams.Error) Error?.Invoke(er);
     }
 
     private static void ThrowIfHadErrors(PowerShell ps, bool ignoreIfStopped = false)
     {
         if (ignoreIfStopped && ps.HadErrors) return;
-        if (ps.HadErrors) throw new RuntimeException(ps.Streams.Error.First().ToString());
+        if (ps.HadErrors) throw new Microsoft.MetadirectoryServices.TerminateRunException(ps.Streams.Error.First().ToString());
+        //if (ps.HadErrors) throw new RuntimeException(ps.Streams.Error.First().ToString());
     }
 
     public void Dispose()
