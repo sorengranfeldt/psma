@@ -8,14 +8,12 @@ namespace Granfeldt
     public sealed class PSEngine : PSEngineBase
     {
         public string PwshPath { get; }
-        public string ExtraArgs { get; }
-        public bool UsePowerShell7 { get; }
+        PowerShellEngineVersion powerShellVersion = PowerShellEngineVersion.WindowsPowerShell51;
 
-        public PSEngine(string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe", bool usePS7 = false, string extraArgs = null)
+        public PSEngine(string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe", PowerShellEngineVersion powerShellEngine = PowerShellEngineVersion.WindowsPowerShell51)
         {
             PwshPath = pwshPath;
-            ExtraArgs = extraArgs;
-            UsePowerShell7 = usePS7;
+            powerShellVersion = powerShellEngine;
         }
 
         protected override (Runspace runspace, PowerShellProcessInstance proc) CreateAndOpenRunspace()
@@ -24,11 +22,7 @@ namespace Granfeldt
             Tracer.TraceInformation("Host SMA: {0} @ {1}", smaAsm.GetName().Version, smaAsm.Location);
             Tracer.TraceInformation("Host bitness: {0}-bit  OS: {1}", Environment.Is64BitProcess ? "64" : "32", Environment.OSVersion);
 
-            if (UsePowerShell7 && !System.IO.File.Exists(PwshPath))
-                throw new FileNotFoundException("pwsh/powershell not found: " + PwshPath);
-
-            Tracer.TraceInformation("USING-PS7: {0}", UsePowerShell7);
-
+            Tracer.TraceInformation("Using-PSEngine: {0}", powerShellVersion.ToString());
             var pspi = new PowerShellProcessInstance();
 
             Warning += w => Tracer.TraceInformation("WARNING: {0}", w);
@@ -37,10 +31,11 @@ namespace Granfeldt
 
             var si = pspi.Process.StartInfo;
 
-            if (UsePowerShell7)
+            if (powerShellVersion == PowerShellEngineVersion.PowerShell7)
             {
+                if (!System.IO.File.Exists(PwshPath)) throw new FileNotFoundException($"pwsh/powershell not found: {PwshPath}");
                 si.FileName = PwshPath;
-                si.Arguments = "-s -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass" + (string.IsNullOrWhiteSpace(ExtraArgs) ? "" : " " + ExtraArgs);
+                si.Arguments = "-s -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass";
             }
 
             si.UseShellExecute = false;
@@ -62,42 +57,11 @@ namespace Granfeldt
                 // note that if using a local account for impersonation, Domain must be computername and not "."
                 var acct = Domain + "\\" + Username;
 
-                // Give that account access to Session 0 window station & desktop
+                // give that account access to Session 0 window station & desktop
                 WinStaDesktopAcl.GrantTo(acct);
-
-                // IMPORTANT: Don't inherit the service env; rebuild a minimal MACHINE env
-                //var ev = si.EnvironmentVariables;
-                //ev.Clear(); // stop inheriting service account's env
-
-                //// Re-seed essentials from MACHINE scope
-                //string sysRoot = Environment.GetEnvironmentVariable("SystemRoot", EnvironmentVariableTarget.Machine);
-                //if (string.IsNullOrEmpty(sysRoot)) sysRoot = @"C:\Windows";
-                //ev["SystemRoot"] = sysRoot;
-
-                //string winDir = Environment.GetEnvironmentVariable("WINDIR", EnvironmentVariableTarget.Machine);
-                //if (string.IsNullOrEmpty(winDir)) winDir = @"C:\Windows";
-                //ev["WINDIR"] = winDir;
-
-                //string comSpec = Environment.GetEnvironmentVariable("ComSpec", EnvironmentVariableTarget.Machine);
-                //if (string.IsNullOrEmpty(comSpec)) comSpec = @"C:\Windows\System32\cmd.exe";
-                //ev["ComSpec"] = comSpec;
-
-                //string path = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Machine);
-                //if (path == null) path = string.Empty;
-                //ev["Path"] = path;
             }
-            else
-            {
-                // Non-impersonated: it's fine to inherit, but still ensure essentials exist
-                //if (string.IsNullOrEmpty(si.EnvironmentVariables["SystemRoot"]))
-                //    si.EnvironmentVariables["SystemRoot"] = Environment.GetEnvironmentVariable("SystemRoot", EnvironmentVariableTarget.Machine) ?? @"C:\Windows";
-                //if (string.IsNullOrEmpty(si.EnvironmentVariables["WINDIR"]))
-                //    si.EnvironmentVariables["WINDIR"] = Environment.GetEnvironmentVariable("WINDIR", EnvironmentVariableTarget.Machine) ?? @"C:\Windows";
-                //if (string.IsNullOrEmpty(si.EnvironmentVariables["ComSpec"]))
-                //    si.EnvironmentVariables["ComSpec"] = Environment.GetEnvironmentVariable("ComSpec", EnvironmentVariableTarget.Machine) ?? @"C:\Windows\System32\cmd.exe";
-                //if (string.IsNullOrEmpty(si.EnvironmentVariables["Path"]))
-                //    si.EnvironmentVariables["Path"] = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Machine) ?? string.Empty;
-            }
+
+            // SHOULD WE DO A WHOAMI (from old impersonation) HERE TO LOG THE CONTEXT WE ARE RUNNING AS?
 
             Tracer.TraceInformation("using-exe: '{0}'  Exists={1}", si.FileName, System.IO.File.Exists(si.FileName));
             Tracer.TraceInformation("args: {0}", si.Arguments);
@@ -125,19 +89,6 @@ namespace Granfeldt
             try
             {
                 runspace.Open();
-
-                // whats this about ???
-                //try { pspi.Process.BeginErrorReadLine(); } catch { }
-                //try { pspi.Process.BeginOutputReadLine(); } catch { }
-
-                //using (var ps = PowerShell.Create())
-                //{
-                //    ps.Runspace = runspace;
-                //    ps.AddScript("$PSVersionTable.PSEdition, $PSVersionTable.PSVersion.ToString()");
-                //    var v = ps.Invoke();
-                //    Tracer.TraceInformation("Remote engine: {0} {1}", v.Count > 0 ? v[0] : "?", v.Count > 1 ? v[1] : "?");
-                //}
-
                 return (runspace, pspi);
             }
             catch (Exception ex)
