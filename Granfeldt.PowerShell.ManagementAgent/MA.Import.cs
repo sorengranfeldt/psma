@@ -1,9 +1,4 @@
-﻿// june 28, 2018, soren granfeldt
-//  - removed error message for 'paged-import-not-supported'
-// july 5, 2018, soren granfeldt
-//  - added
-
-using Microsoft.MetadirectoryServices;
+﻿using Microsoft.MetadirectoryServices;
 using System;
 using System.Collections;
 using System.Collections.Generic;
