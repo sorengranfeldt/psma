@@ -10,20 +10,15 @@ namespace Granfeldt
         const string sourceName = "PSMA";
         public static TraceSource trace = new TraceSource(sourceName, SourceLevels.All);
 
-        public static void Enter(string entryPoint)
-        {
-            TraceInformation("enter {0}", entryPoint);
-        }
-        public static void Exit(string entryPoint)
-        {
-            TraceInformation("exit {0}", entryPoint);
-        }
+        public static void Enter(string entryPoint) => TraceInformation($"enter {entryPoint}");
+        public static void Exit(string entryPoint) => TraceInformation($"exit {entryPoint}");
+
         public static void TraceInformation(string message, params object[] param)
         {
             if (param == null || param.Length == 0)
             {
                 // No parameters provided, treat message as literal text to avoid format string issues
-                trace.TraceInformation("{0}", message);
+                trace.TraceInformation($"{message}");
             }
             else
             {
