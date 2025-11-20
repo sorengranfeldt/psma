@@ -27,14 +27,14 @@ namespace Granfeldt
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified, the scripts are run in the security context of the FIM Synchronization Service service account."));
-                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("NOTE: Impersonation with PowerShell 7 is not implemented. If impersonation credentials are provided and PowerShell 7 is selected, the system will automatically fall back to Windows PowerShell 5.1 for impersonated operations. WARNING: Scripts with PowerShell 7-specific syntax will fail in Windows PowerShell 5.1."));
+                        //configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("NOTE: Impersonation with PowerShell 7 is not implemented. If impersonation credentials are provided and PowerShell 7 is selected, the system will automatically fall back to Windows PowerShell 5.1 for impersonated operations. WARNING: Scripts with PowerShell 7-specific syntax will fail in Windows PowerShell 5.1."));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationDomain, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationUsername, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateEncryptedStringParameter(Constants.Parameters.ImpersonationPassword, ""));
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell Engine Configuration: Select which PowerShell engine to use for script execution."));
-                        configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell 7 provides better performance and modern features but impersonation is not implemented. When impersonation is required, the system automatically uses Windows PowerShell 5.1. Ensure scripts are compatible with both versions."));
+                        //configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell 7 provides better performance and modern features but impersonation is not implemented. When impersonation is required, the system automatically uses Windows PowerShell 5.1. Ensure scripts are compatible with both versions."));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDropDownParameter(Constants.Parameters.PowerShellVersion, "Windows PowerShell 5.1,PowerShell 7", false, "Windows PowerShell 5.1"));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.PowerShell7ExecutablePath, ""));
 
@@ -85,9 +85,9 @@ namespace Granfeldt
                     {
                         return new ParameterValidationResult(ParameterValidationResultCode.Failure, string.Format("Can not find or access Schema script '{0}'. Please make sure that the FIM Synchronization Service service account can read and access this file.", schemaScriptFilename), Constants.Parameters.SchemaScript);
                     }
-                    
+
                     // Validate PowerShell 7 path if selected
-                    if (configParameters.Contains(Constants.Parameters.PowerShellVersion) &&
+                     if (configParameters.Contains(Constants.Parameters.PowerShellVersion) &&
                         configParameters[Constants.Parameters.PowerShellVersion]?.Value == "PowerShell 7")
                     {
                         if (!configParameters.Contains(Constants.Parameters.PowerShell7ExecutablePath) ||
@@ -105,14 +105,14 @@ namespace Granfeldt
                         }
                         
                         // Check if impersonation is configured and warn about fallback
-                        bool hasImpersonation = configParameters.Contains(Constants.Parameters.ImpersonationUsername) &&
-                                               !string.IsNullOrWhiteSpace(configParameters[Constants.Parameters.ImpersonationUsername]?.Value);
+                        //bool hasImpersonation = configParameters.Contains(Constants.Parameters.ImpersonationUsername) &&
+                        //                       !string.IsNullOrWhiteSpace(configParameters[Constants.Parameters.ImpersonationUsername]?.Value);
                         
-                        if (hasImpersonation)
-                        {
-                            // This is just informational - we allow the configuration but will fallback at runtime
-                            Tracer.TraceInformation("PowerShell 7 selected with impersonation configured - will fallback to Windows PowerShell 5.1 for impersonated operations");
-                        }
+                        //if (hasImpersonation)
+                        //{
+                        //    // This is just informational - we allow the configuration but will fallback at runtime
+                        //    Tracer.TraceInformation("PowerShell 7 selected with impersonation configured - will fallback to Windows PowerShell 5.1 for impersonated operations");
+                        //}
                     }
                 }
                 if (page == ConfigParameterPage.Global)
@@ -150,8 +150,6 @@ namespace Granfeldt
             Tracer.Enter("initializeconfigparameters");
             try
             {
-                Tracer.TraceInformation("*** ENHANCED PARAMETER DEBUGGING ***");
-                Tracer.TraceInformation("config-parameters-collection-null: {0}", configParameters == null);
                 if (configParameters != null)
                 {
                     Tracer.TraceInformation("config-parameters-count: {0}", configParameters.Count);
@@ -159,16 +157,15 @@ namespace Granfeldt
                     foreach (ConfigParameter cp in configParameters)
                     {
                         Tracer.TraceInformation("{0}: '{1}'", cp.Name, cp.IsEncrypted ? "*** secret ***" : cp.Value);
-                        
-                        // Enhanced PowerShell Version debugging
+
                         if (cp.Name.Equals(Constants.Parameters.PowerShellVersion))
                         {
-                            Tracer.TraceInformation("*** FOUND POWERSHELL VERSION PARAMETER ***");
-                            Tracer.TraceInformation("powershell-version-parameter-name: '{0}'", cp.Name);
-                            Tracer.TraceInformation("powershell-version-parameter-value: '{0}'", cp.Value ?? "(null)");
-                            Tracer.TraceInformation("powershell-version-constants-value: '{0}'", Constants.Parameters.PowerShellVersion);
-                            PowerShellVersion = configParameters[cp.Name].Value;
-                            Tracer.TraceInformation("powershell-version-assigned: '{0}'", PowerShellVersion ?? "(null)");
+                            PowerShellVersion = configParameters[cp.Name].Value ?? "Windows PowerShell 5.1";
+                            SelectedPowerShellEngine = PowerShellVersion == "PowerShell 7" ? PowerShellEngineVersion.PowerShell7 : PowerShellEngineVersion.WindowsPowerShell51;
+                        }
+                        if (cp.Name.Equals(Constants.Parameters.PowerShell7ExecutablePath))
+                        {
+                            PowerShell7ExecutablePath = configParameters[cp.Name].Value ?? PowerShell7ExecutablePath; // "C:/Program Files/PowerShell/7/pwsh.exe";
                         }
                         
                         if (cp.Name.Equals(Constants.Parameters.Username)) Username = configParameters[cp.Name].Value;
@@ -218,61 +215,24 @@ namespace Granfeldt
                         if (cp.Name.Equals(Constants.Parameters.SchemaScript))
                         {
                             schemaScriptPath = configParameters[cp.Name].Value;
-                            Tracer.TraceInformation("schema-script-configured: '{0}'", schemaScriptPath ?? "(null)");
                         }
                         if (cp.Name.Equals(Constants.Parameters.ImportScript))
                         {
                             importScriptPath = configParameters[cp.Name].Value;
-                            Tracer.TraceInformation("import-script-configured: '{0}'", importScriptPath ?? "(null)");
                         }
                         if (cp.Name.Equals(Constants.Parameters.ExportScript))
                         {
                             exportScriptPath = configParameters[cp.Name].Value;
-                            Tracer.TraceInformation("export-script-configured: '{0}'", exportScriptPath ?? "(null)");
                         }
                         if (cp.Name.Equals(Constants.Parameters.PasswordManagementScript))
                         {
                             passwordManagementScriptPath = configParameters[cp.Name].Value;
-                            Tracer.TraceInformation("password-script-configured: '{0}'", passwordManagementScriptPath ?? "(null)");
                         }
                         if (cp.Name.Equals(Constants.Parameters.ExportSimpleObjects)) exportSimpleObjects = configParameters[cp.Name].Value == "0" ? false : true;
                         if (cp.Name.Equals(Constants.Parameters.UsePagedImport)) usePagedImport = configParameters[cp.Name].Value == "0" ? false : true;
-                        // PowerShellVersion and PowerShell7ExecutablePath already processed in the enhanced debugging section above
                     }
                 }
 
-                // Set default values if not provided
-                if (string.IsNullOrEmpty(PowerShellVersion))
-                {
-                    PowerShellVersion = "Windows PowerShell 5.1";
-                }
-                if (string.IsNullOrEmpty(PowerShell7ExecutablePath))
-                {
-                    // Use forward slashes initially to avoid regex issues, will be normalized by Path.GetFullPath later
-                    PowerShell7ExecutablePath = "C:/Program Files/PowerShell/7/pwsh.exe";
-                }
-
-                Tracer.TraceInformation("powershell-version: '{0}'", PowerShellVersion);
-                Tracer.TraceInformation("powershell7-executable-path: '{0}'", PowerShell7ExecutablePath);
-                
-                // ENHANCED DEBUG: Detailed configuration validation
-                Tracer.TraceInformation("*** ENHANCED CONFIGURATION DEBUG ***");
-                Tracer.TraceInformation("powershell-version-is-null: {0}", PowerShellVersion == null);
-                Tracer.TraceInformation("powershell-version-contains-ps7: {0}", PowerShellVersion != null && PowerShellVersion.Contains("PowerShell 7"));
-                Tracer.TraceInformation("powershell7-path-exists: {0}", !string.IsNullOrEmpty(PowerShell7ExecutablePath) && System.IO.File.Exists(PowerShell7ExecutablePath));
-                if (!string.IsNullOrEmpty(PowerShell7ExecutablePath) && !System.IO.File.Exists(PowerShell7ExecutablePath))
-                {
-                    Tracer.TraceError("powershell7-executable-not-found-at-configured-path: '{0}'", PowerShell7ExecutablePath);
-                }
-                
-                // Log final configuration state
-                Tracer.TraceInformation("*** FINAL SCRIPT CONFIGURATION STATE ***");
-                Tracer.TraceInformation("schema-script-path: '{0}'", schemaScriptPath ?? "(null)");
-                Tracer.TraceInformation("import-script-path: '{0}'", importScriptPath ?? "(null)");
-                Tracer.TraceInformation("export-script-path: '{0}'", exportScriptPath ?? "(null)");
-                Tracer.TraceInformation("password-script-path: '{0}'", passwordManagementScriptPath ?? "(null)");
-                Tracer.TraceInformation("use-paged-import: {0}", usePagedImport);
-                Tracer.TraceInformation("export-simple-objects: {0}", exportSimpleObjects);
             }
             catch (Exception ex)
             {
