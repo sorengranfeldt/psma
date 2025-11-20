@@ -1,7 +1,4 @@
-﻿// march 27, 2024 | soren granfeldt
-//  - code review and optimization
-
-using Microsoft.MetadirectoryServices;
+﻿using Microsoft.MetadirectoryServices;
 using System;
 
 namespace Granfeldt
