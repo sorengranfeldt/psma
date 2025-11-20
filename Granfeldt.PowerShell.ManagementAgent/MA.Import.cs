@@ -518,9 +518,8 @@ namespace Granfeldt
                 }
                 catch (Exception ex)
                 {
-                    Tracer.TraceWarning("closeimport-dispose-error", 1, ex.Message);
+                    Tracer.TraceWarning("closeimportconnection-dispose-error", 1, ex.Message);
                 }
-                
                 return cicr;
             }
             catch (AppDomainUnloadedException)
