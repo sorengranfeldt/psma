@@ -86,8 +86,7 @@ namespace Granfeldt
         PowerShellEngineVersion SelectedPowerShellEngine = PowerShellEngineVersion.WindowsPowerShell51;
         IPSEngine engine = default;
 
-        [Obsolete] 
-        string PowerShellVersion = "Windows PowerShell 5.1"; // Default to Windows PowerShell 5.1
+
         string PowerShell7ExecutablePath = @"C:\Program Files\PowerShell\7\pwsh.exe"; // Default PowerShell 7 path
 
         void EnsurePowerShellEngine()
