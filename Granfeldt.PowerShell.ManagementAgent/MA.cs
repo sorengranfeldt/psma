@@ -213,6 +213,21 @@ namespace Granfeldt
 
                 try
                 {
+                    Tracer.TraceInformation("disposing-powershell-engine");
+                    engine?.Dispose();
+                    engine = null;
+                }
+                catch (AppDomainUnloadedException)
+                {
+                    Tracer.TraceInformation("engine-dispose-skipped-appdomain-unloading");
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceWarning("engine-dispose-failed-but-continuing", 1, ex.Message);
+                }
+
+                try
+                {
                     // Only perform garbage collection if we're not in an unloading AppDomain
                     // as this can trigger finalizers that access disposed PowerShell objects
                     Tracer.TraceInformation("checking-appdomain-state-before-gc");
