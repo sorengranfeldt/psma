@@ -118,54 +118,6 @@ namespace Granfeldt
                 };
         } 
 
-        void WhoAmI()
-        {
-            Tracer.Enter("show-identity");
-            try
-            {
-                using (WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent())
-                {
-                    Tracer.TraceInformation("identity-name: {0}", currentIdentity.Name);
-                    Tracer.TraceInformation("identity-token: {0}", currentIdentity.Token);
-                    Tracer.TraceInformation("identity-user-value: {0}", currentIdentity.User.Value);
-                    if (currentIdentity.Actor != null)
-                    {
-                        Tracer.TraceInformation("identity-actor: {0}", currentIdentity.Actor.Name);
-                        Tracer.TraceInformation("identity-actor-auth-type: {0}", currentIdentity.Actor.AuthenticationType);
-                    }
-                    if (currentIdentity.Groups != null)
-                    {
-                        foreach (IdentityReference group in currentIdentity.Groups)
-                        {
-                            try
-                            {
-                                NTAccount account = group.Translate(typeof(NTAccount)) as NTAccount;
-                                Tracer.TraceInformation("group-membership {0}", account.Value);
-                            }
-                            catch (Exception ex)
-                            {
-                                /*
-								 * If the SID cannot be resolved, log the SID, but don't throw the exception.
-								 * Throwing the exception kills the run profile, where the membership might be totally
-								 * irrelevant. We do log the SID for diagnostic purpose.
-								 */
-                                Tracer.TraceError("error-resolving-current-group-name: " + group.Value, ex);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Tracer.TraceError("error-showing-current-identity", ex);
-                throw;
-            }
-            finally
-            {
-                Tracer.Exit("show-identity");
-            }
-        }
-
         PSCredential GetSecureCredentials(string username, SecureString secureStringPassword)
         {
             if (string.IsNullOrEmpty(username) || (secureStringPassword == null))
