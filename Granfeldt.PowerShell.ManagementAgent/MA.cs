@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Management.Automation;
 using System.Security;
-using System.Security.Principal;
 
 namespace Granfeldt
 {
