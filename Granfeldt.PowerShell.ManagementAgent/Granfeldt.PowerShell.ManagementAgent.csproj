@@ -88,22 +88,16 @@
   <ItemGroup>
     <Compile Include="Helper.StringHandling.cs" />
     <Compile Include="MA.Import.cs" />
-    <Compile Include="PowerShellEngine.Old\MA.Impersonation.cs" />
     <Compile Include="MA.Parameters.cs" />
     <Compile Include="MA.Schema.cs" />
     <Compile Include="MA.Capabilities.cs" />
     <Compile Include="MA.Export.cs" />
     <Compile Include="MA.Password.cs" />
-    <Compile Include="PowerShellEngine.Old\MA.PowerShell.cs" />
     <Compile Include="MA.cs" />
-    <Compile Include="PowerShellEngine.Old\IPowerShellEngine.cs" />
-    <Compile Include="PSEngine\DesktopAccess.cs" />
+    <Compile Include="PSEngine\Impersonation.Helper.cs" />
     <Compile Include="PSEngine\IPSEngine.cs" />
     <Compile Include="PSEngine\PSEngine.cs" />
     <Compile Include="PSEngine\PSEngineBase.cs" />
-    <Compile Include="PowerShellEngine.Old\WindowsPowerShellEngine.cs" />
-    <Compile Include="PowerShellEngine.Old\PowerShell7Engine.cs" />
-    <Compile Include="PowerShellEngine.Old\PowerShellEngineFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tracer.cs" />
   </ItemGroup>
