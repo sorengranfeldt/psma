@@ -192,20 +192,7 @@ namespace Granfeldt
             Tracer.Enter("closeexportconnection");
             try
             {
-
-
-                try
-                {
-                    Dispose();
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore disposal
-                }
-                catch (Exception ex)
-                {
-                    Tracer.TraceWarning("closeexportconnection-dispose-error", 1, ex.Message);
-                }
+                Dispose();
             }
             catch (AppDomainUnloadedException)
             {

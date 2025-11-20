@@ -35,8 +35,8 @@ namespace Granfeldt
             if (Schema == null) return null;
             schema = Schema;
 
-			schemaPSObject = new PSObject();
-			foreach (SchemaType type in schema.Types)
+            schemaPSObject = new PSObject();
+            foreach (SchemaType type in schema.Types)
             {
                 PSObject typeObj = new PSObject();
                 typeObj.Members.Add(new PSNoteProperty("ObjectType", type.Name));
@@ -507,19 +507,7 @@ namespace Granfeldt
                 {
                     cicr.CustomData = importRunStep.CustomData;
                 }
-                
-                try
-                {
-                    Dispose();
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore disposal
-                }
-                catch (Exception ex)
-                {
-                    Tracer.TraceWarning("closeimportconnection-dispose-error", 1, ex.Message);
-                }
+                Dispose();
                 return cicr;
             }
             catch (AppDomainUnloadedException)
