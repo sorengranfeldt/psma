@@ -500,19 +500,6 @@ namespace Granfeldt
             Tracer.Enter("closeimportconnectionresults");
             try
             {
-                try
-                {
-                    //CloseRunspace();
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore runspace cleanup
-                }
-                catch (Exception ex)
-                {
-                    Tracer.TraceWarning("closeimport-runspace-cleanup-error", 1, ex.Message);
-                }
-
                 CloseImportConnectionResults cicr = new CloseImportConnectionResults();
                 Tracer.TraceInformation("custom-data {0}", importRunStep.CustomData);
                 Tracer.TraceInformation("close-reason {0}", importRunStep.Reason);
