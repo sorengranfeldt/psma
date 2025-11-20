@@ -27,14 +27,12 @@ namespace Granfeldt
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("Impersonation (optional): If username and password below are specified (domain optional), the specified user is used to run all scripts. If not specified, the scripts are run in the security context of the FIM Synchronization Service service account."));
-                        //configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("NOTE: Impersonation with PowerShell 7 is not implemented. If impersonation credentials are provided and PowerShell 7 is selected, the system will automatically fall back to Windows PowerShell 5.1 for impersonated operations. WARNING: Scripts with PowerShell 7-specific syntax will fail in Windows PowerShell 5.1."));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationDomain, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.ImpersonationUsername, ""));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateEncryptedStringParameter(Constants.Parameters.ImpersonationPassword, ""));
 
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDividerParameter());
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell Engine Configuration: Select which PowerShell engine to use for script execution."));
-                        //configParametersDefinitions.Add(ConfigParameterDefinition.CreateLabelParameter("PowerShell 7 provides better performance and modern features but impersonation is not implemented. When impersonation is required, the system automatically uses Windows PowerShell 5.1. Ensure scripts are compatible with both versions."));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateDropDownParameter(Constants.Parameters.PowerShellVersion, "Windows PowerShell 5.1,PowerShell 7", false, "Windows PowerShell 5.1"));
                         configParametersDefinitions.Add(ConfigParameterDefinition.CreateStringParameter(Constants.Parameters.PowerShell7ExecutablePath, ""));
 
@@ -103,16 +101,6 @@ namespace Granfeldt
                         {
                             return new ParameterValidationResult(ParameterValidationResultCode.Failure, string.Format("Can not find or access PowerShell 7 executable '{0}'. Please make sure that the FIM Synchronization Service service account can read and access this file.", powershell7ExecutableFilename), Constants.Parameters.PowerShell7ExecutablePath);
                         }
-                        
-                        // Check if impersonation is configured and warn about fallback
-                        //bool hasImpersonation = configParameters.Contains(Constants.Parameters.ImpersonationUsername) &&
-                        //                       !string.IsNullOrWhiteSpace(configParameters[Constants.Parameters.ImpersonationUsername]?.Value);
-                        
-                        //if (hasImpersonation)
-                        //{
-                        //    // This is just informational - we allow the configuration but will fallback at runtime
-                        //    Tracer.TraceInformation("PowerShell 7 selected with impersonation configured - will fallback to Windows PowerShell 5.1 for impersonated operations");
-                        //}
                     }
                 }
                 if (page == ConfigParameterPage.Global)
@@ -160,7 +148,7 @@ namespace Granfeldt
 
                         if (cp.Name.Equals(Constants.Parameters.PowerShellVersion))
                         {
-                            PowerShellVersion = configParameters[cp.Name].Value ?? "Windows PowerShell 5.1";
+                            string PowerShellVersion = configParameters[cp.Name].Value ?? "Windows PowerShell 5.1";
                             SelectedPowerShellEngine = PowerShellVersion == "PowerShell 7" ? PowerShellEngineVersion.PowerShell7 : PowerShellEngineVersion.WindowsPowerShell51;
                         }
                         if (cp.Name.Equals(Constants.Parameters.PowerShell7ExecutablePath))
