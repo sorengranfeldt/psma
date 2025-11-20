@@ -12,45 +12,45 @@ namespace Granfeldt
     {
         public static class Parameters
         {
-            public static string Username = "Username";
-            public static string Password = "Password";
+            public const string Username = "Username";
+            public const string Password = "Password";
 
-            public static string UsernameAux = "Username (auxiliary)";
-            public static string PasswordAux = "Password (auxiliary)";
+            public const string UsernameAux = "Username (auxiliary)";
+            public const string PasswordAux = "Password (auxiliary)";
 
-            public static string ConfigurationParameters = "Configuration parameters";
+            public const string ConfigurationParameters = "Configuration parameters";
 
-            public static string ImpersonationDomain = "Domain (impersonate)";
-            public static string ImpersonationUsername = "Username (impersonate)";
-            public static string ImpersonationPassword = "Password  (impersonate)";
+            public const string ImpersonationDomain = "Domain (impersonate)";
+            public const string ImpersonationUsername = "Username (impersonate)";
+            public const string ImpersonationPassword = "Password  (impersonate)";
 
-            public static string SchemaScript = "Schema Script";
-            public static string ImportScript = "Import Script";
-            public static string UsePagedImport = "Use paged import";
-            public static string ExportScript = "Export Script";
-            public static string ExportSimpleObjects = "Export simple objects";
-            public static string PasswordManagementScript = "Password Management Script";
+            public const string SchemaScript = "Schema Script";
+            public const string ImportScript = "Import Script";
+            public const string UsePagedImport = "Use paged import";
+            public const string ExportScript = "Export Script";
+            public const string ExportSimpleObjects = "Export simple objects";
+            public const string PasswordManagementScript = "Password Management Script";
 
-            public static string PowerShellVersion = "PowerShell Version";
-            public static string PowerShell7ExecutablePath = "PowerShell 7 Executable Path";
+            public const string PowerShellVersion = "PowerShell Version";
+            public const string PowerShell7ExecutablePath = "PowerShell 7 Executable Path";
         }
         public static class ControlValues
         {
-            public static string Identifier = "[Identifier]";
-            public static string IdentifierAsGuid = "[IdentifierAsGuid]";
-            public static string ErrorName = "[ErrorName]";
-            public static string ErrorDetail = "[ErrorDetail]";
-            public static string Anchor = "[Anchor]";
-            public static string DN = "[DN]";
-            public static string RDN = "[RDN]";
-            public static string ObjectType = "[ObjectType]";
-            public static string ObjectModificationType = "[ObjectModificationType]";
-            public static string AttributeNames = "[AttributeNames]";
-            public static string ChangedAttributeNames = "[ChangedAttributeNames]";
-            public static string ObjectClass = "objectClass";
-            public static string ChangeType = "changeType";
-            public static string ObjectClassEx = "[ObjectClass]";
-            public static string ChangeTypeEx = "[ChangeType]";
+            public const string Identifier = "[Identifier]";
+            public const string IdentifierAsGuid = "[IdentifierAsGuid]";
+            public const string ErrorName = "[ErrorName]";
+            public const string ErrorDetail = "[ErrorDetail]";
+            public const string Anchor = "[Anchor]";
+            public const string DN = "[DN]";
+            public const string RDN = "[RDN]";
+            public const string ObjectType = "[ObjectType]";
+            public const string ObjectModificationType = "[ObjectModificationType]";
+            public const string AttributeNames = "[AttributeNames]";
+            public const string ChangedAttributeNames = "[ChangedAttributeNames]";
+            public const string ObjectClass = "objectClass";
+            public const string ChangeType = "changeType";
+            public const string ObjectClassEx = "[ObjectClass]";
+            public const string ChangeTypeEx = "[ChangeType]";
         }
     }
     public enum PowerShellEngineVersion { WindowsPowerShell51, PowerShell7 }
