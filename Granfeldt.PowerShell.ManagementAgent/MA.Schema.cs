@@ -11,8 +11,6 @@ namespace Granfeldt
 {
     public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
     {
-        Collection<PSObject> schemaResults;
-
         class AttributeDefinition
         {
             public string Name { get; set; }
@@ -59,7 +57,7 @@ namespace Granfeldt
 
                 Tracer.TraceInformation("using-schema-script: {0}", schemaScriptPath);
 
-                schemaResults = engine.InvokeCommand(Path.GetFullPath(schemaScriptPath), GetDefaultScriptParameters(), null);
+                Collection<PSObject> schemaResults = engine.InvokeCommand(Path.GetFullPath(schemaScriptPath), GetDefaultScriptParameters(), null);
 
                 if (schemaResults == null)
                 {
@@ -86,6 +84,15 @@ namespace Granfeldt
                             string[] elements = p.Name.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
                             string attrName = elements[0].Trim();
                             string attrType = elements[1].Trim();
+
+                            if (elements.Length < 2)
+                            {
+                                Tracer.TraceError("invalid-schema-property-name-format: '{0}'", p.Name ?? "(null)");
+                                throw new InvalidOperationException(
+                                    "Schema script returned a property with invalid name format. " +
+                                    "Expected 'name|type', e.g. 'accountName|string' or 'anchor-id|string'. " +
+                                    "Offending property name: '" + (p.Name ?? "(null)") + "'.");
+                            }
 
                             if (string.Equals(attrName, Constants.ControlValues.ObjectClass, StringComparison.OrdinalIgnoreCase))
                             {
