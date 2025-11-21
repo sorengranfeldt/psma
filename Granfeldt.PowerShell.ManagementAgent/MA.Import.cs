@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 using System.Text.RegularExpressions;
 
 namespace Granfeldt
@@ -30,9 +29,9 @@ namespace Granfeldt
         Schema schema;
         PSObject schemaPSObject;
 
-        public PSObject InitializeSchemaVariables(Schema Schema)
+        public void InitializeSchemaVariables(Schema Schema)
         {
-            if (Schema == null) return null;
+            if (Schema == null) return;
             schema = Schema;
 
             schemaPSObject = new PSObject();
@@ -60,7 +59,6 @@ namespace Granfeldt
                 // add to general schema object
                 schemaPSObject.Members.Add(new PSNoteProperty(type.Name, typeObj));
             }
-            return null;
         }
 
         public OpenImportConnectionResults OpenImportConnection(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, Schema types, OpenImportConnectionRunStep openImportRunStep)
@@ -75,16 +73,10 @@ namespace Granfeldt
                     {
                         foreach (SchemaAttribute attr in type.AnchorAttributes)
                         {
-                            //Tracer.TraceInformation("{0}-anchor-attribute {1} [{2}]", type.Name, attr.Name, attr.DataType);
                             objectTypeAnchorAttributeNames.Add(type.Name, attr.Name);
-                        }
-                        foreach (SchemaAttribute attr in type.Attributes)
-                        {
-                            //Tracer.TraceInformation("{0}-attribute {1} [{2}]", type.Name, attr.Name, attr.DataType);
                         }
                     }
                     InitializeSchemaVariables(types);
-                    EnsurePowerShellEngine();
                 }
                 catch (Exception ex)
                 {
@@ -96,10 +88,7 @@ namespace Granfeldt
                 }
 
                 InitializeConfigParameters(configParameters);
-
-                //SetupImpersonationToken();
-
-                //OpenRunspace();
+                EnsurePowerShellEngine();
 
                 Tracer.TraceInformation("resetting-pipeline-results-and-counters");
                 importResults = new List<PSObject>();
@@ -154,24 +143,14 @@ namespace Granfeldt
                     parameters.Add("ImportPageNumber", ImportPageNumber);
                     parameters.Add("Schema", schemaPSObject);
 
-                    //cmd.Parameters.Add(new CommandParameter("OperationType", importOperationType.ToString()));
-                    //cmd.Parameters.Add(new CommandParameter("UsePagedImport", usePagedImport));
-                    //cmd.Parameters.Add(new CommandParameter("PageSize", ImportRunStepPageSize));
-                    //cmd.Parameters.Add(new CommandParameter("ImportPageNumber", ImportPageNumber));
-                    //cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
 
                     Tracer.TraceInformation("setting-custom-data '{0}'", importRunStep.CustomData);
                     engine.SetVariable("RunStepCustomData", importRunStep.CustomData);
                     Tracer.TraceInformation("setting-page-token '{0}'", pageToken);
                     engine.SetVariable("PageToken", pageToken);
-                    //SetPowerShellVariable("RunStepCustomData", importRunStep.CustomData);
-                    //SetPowerShellVariable("PageToken", pageToken);
 
-                    //importResults = InvokePowerShellScript(cmd, null).ToList<PSObject>();
                     importResults = engine.InvokeCommand(Path.GetFullPath(importScriptPath), parameters, null).ToList();
 
-                    //returnedCustomData = GetPowerShellVariable("RunStepCustomData");
-                    //pageToken = GetPowerShellVariable("PageToken");
                     returnedCustomData = engine.GetVariable("RunStepCustomData");
                     pageToken = engine.GetVariable("PageToken");
 
@@ -181,7 +160,6 @@ namespace Granfeldt
 
                     if (usePagedImport)
                     {
-                        //object moreToImportObject = GetPowerShellVariable("MoreToImport");
                         object moreToImportObject = engine.GetVariable("MoreToImport");
                         if (moreToImportObject == null)
                         {
