@@ -18,16 +18,16 @@ namespace Granfeldt
         {
             var obj = new PSObject();
 
-            // Basic metadata
+            // basic metadata
             obj.Properties.Add(new PSNoteProperty("[DN]", csentry.DN?.ToString()));
             obj.Properties.Add(new PSNoteProperty("[RDN]", csentry.RDN));
             obj.Properties.Add(new PSNoteProperty("DN", csentry.DN?.ToString())); // for legacy scripts / support
             obj.Properties.Add(new PSNoteProperty("[ObjectType]", csentry.ObjectType));
 
             // enumerate attribute *names*
-            foreach (string attrName in csentry)   // Enumerator returns attribute names
+            foreach (string attrName in csentry)
             {
-                Attrib attr = csentry[attrName];   // use indexer to get the Attrib
+                Attrib attr = csentry[attrName];
                 if (attr == null || !attr.IsPresent) continue;
 
                 if (attr.IsMultivalued)
