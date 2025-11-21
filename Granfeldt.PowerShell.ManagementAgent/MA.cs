@@ -73,19 +73,18 @@ namespace Granfeldt
 
         Dictionary<string, string> ConfigurationParameter = new Dictionary<string, string>();
 
-        // Script file paths
+        // script file paths
         string schemaScriptPath = null;
         string importScriptPath = null;
         string exportScriptPath = null;
         string passwordManagementScriptPath = null;
 
-        // Script execution options
+        // script execution options
         bool usePagedImport = false;
         bool exportSimpleObjects = true;
 
         PowerShellEngineVersion SelectedPowerShellEngine = PowerShellEngineVersion.WindowsPowerShell51;
         IPSEngine engine = default;
-
 
         string PowerShell7ExecutablePath = @"C:\Program Files\PowerShell\7\pwsh.exe"; // Default PowerShell 7 path
 
@@ -181,7 +180,7 @@ namespace Granfeldt
         {
             Tracer.Enter("dispose");
 
-            // Check if AppDomain is finalizing before doing any cleanup
+            // check if appdomain is finalizing before doing any cleanup
             try
             {
                 if (AppDomain.CurrentDomain.IsFinalizingForUnload())
@@ -192,7 +191,7 @@ namespace Granfeldt
             }
             catch (AppDomainUnloadedException)
             {
-                // AppDomain is already unloading, exit immediately
+                // appdomain is already unloading, exit immediately
                 Tracer.TraceWarning("dispose-aborted-appdomain-unloaded", 1);
                 return;
             }
@@ -207,7 +206,7 @@ namespace Granfeldt
                 }
                 catch (AppDomainUnloadedException)
                 {
-                    // AppDomain is unloading, ignore variable cleanup
+                    // appdomain is unloading, ignore variable cleanup
                 }
 
                 try
@@ -224,37 +223,10 @@ namespace Granfeldt
                 {
                     Tracer.TraceWarning("engine-dispose-failed-but-continuing", 1, ex.Message);
                 }
-
-                try
-                {
-                    // Only perform garbage collection if we're not in an unloading AppDomain
-                    // as this can trigger finalizers that access disposed PowerShell objects
-                    Tracer.TraceInformation("checking-appdomain-state-before-gc");
-                    if (!AppDomain.CurrentDomain.IsFinalizingForUnload())
-                    {
-                        Tracer.TraceInformation("collection-garbage");
-                        GC.Collect(0, GCCollectionMode.Default, true);
-                        Tracer.TraceInformation("garbage-collection-completed");
-                    }
-                    else
-                    {
-                        Tracer.TraceInformation("skipping-gc-appdomain-finalizing");
-                    }
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore garbage collection
-                    Tracer.TraceInformation("gc-skipped-appdomain-unloading");
-                }
-                catch (Exception ex)
-                {
-                    // Don't let GC failures break disposal
-                    Tracer.TraceWarning("gc-failed-but-continuing", 1, ex.Message);
-                }
             }
             catch (AppDomainUnloadedException)
             {
-                // AppDomain is unloading, allow graceful exit
+                // appdomain is unloading, allow graceful exit
             }
             catch (Exception ex)
             {
