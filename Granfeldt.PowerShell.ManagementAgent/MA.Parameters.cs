@@ -148,8 +148,7 @@ namespace Granfeldt
 
                         if (cp.Name.Equals(Constants.Parameters.PowerShellVersion))
                         {
-                            string PowerShellVersion = configParameters[cp.Name].Value ?? "Windows PowerShell 5.1";
-                            SelectedPowerShellEngine = PowerShellVersion == "PowerShell 7" ? PowerShellEngineVersion.PowerShell7 : PowerShellEngineVersion.WindowsPowerShell51;
+                            SelectedPowerShellEngine = configParameters[cp.Name].Value == "PowerShell 7" ? PowerShellEngineVersion.PowerShell7 : PowerShellEngineVersion.WindowsPowerShell51;
                         }
                         if (cp.Name.Equals(Constants.Parameters.PowerShell7ExecutablePath))
                         {
