@@ -17,11 +17,7 @@ namespace Granfeldt
 
         protected override (Runspace runspace, PowerShellProcessInstance proc) CreateAndOpenRunspace()
         {
-            //var smaAsm = typeof(System.Management.Automation.PowerShell).Assembly;
-            //Tracer.TraceInformation("Host SMA: {0} @ {1}", smaAsm.GetName().Version, smaAsm.Location);
-            //Tracer.TraceInformation("Host bitness: {0}-bit  OS: {1}", Environment.Is64BitProcess ? "64" : "32", Environment.OSVersion);
-
-            Tracer.TraceInformation("powershell-engine-configured: {0}", powerShellVersion.ToString());
+            Tracer.TraceInformation($"powershell-engine-configured: {powerShellVersion}");
             var pspi = new PowerShellProcessInstance();
 
             Warning += w => Tracer.TraceWarning("WARNING: {0}", -1, w);
@@ -44,15 +40,14 @@ namespace Granfeldt
             si.RedirectStandardError = true;
             si.CreateNoWindow = true;
             si.LoadUserProfile = true;
-            //si.WorkingDirectory = string.IsNullOrEmpty(PwshPath) ? @"C:\Windows\System32" : Path.GetDirectoryName(PwshPath);
 
-            // Credentials
+            // impersonation credentials
             if (ShouldImpersonate())
             {
                 si.Domain = string.IsNullOrWhiteSpace(Domain) ? "." : Domain;
                 si.UserName = Username;
                 si.Password = SecurePassword;
-                Tracer.TraceInformation($"Impersonation: Domain='{si.Domain ?? "empty"}', UserName='{si.UserName ?? "(empty)"}', Password={(si.Password == null ? "(empty)" : "***")}");
+                Tracer.TraceInformation($"powershell-impersonation: domain='{si.Domain ?? "empty"}', username='{si.UserName ?? "(empty)"}', password={(si.Password == null ? "(empty)" : "***")}");
 
                 // could be simplified since we already handled missing domain in si.Domain above
                 // note that if using a local account for impersonation, Domain must be computername and not "."
@@ -61,28 +56,15 @@ namespace Granfeldt
                 // give that account access to Session 0 window station & desktop
                 WinStaDesktopAcl.GrantTo(acct);
             }
-
-            // SHOULD WE DO A WHOAMI (from old impersonation) HERE TO LOG THE CONTEXT WE ARE RUNNING AS?
-
-            Tracer.TraceInformation("powershell-executable: '{0}' (exists={1})", si.FileName, File.Exists(si.FileName));
-            Tracer.TraceInformation("powershell-args: {0}", si.Arguments);
-            Tracer.TraceInformation("powershell-working-directory: '{0}' (exists={1})", si.WorkingDirectory, Directory.Exists(si.WorkingDirectory));
-            Tracer.TraceInformation("powershell-environment: systemroot='{0}', windir='{1}', comspec='{2}', path(empty)={3}",
-                si.EnvironmentVariables["SystemRoot"], si.EnvironmentVariables["WINDIR"],
-                si.EnvironmentVariables["ComSpec"], string.IsNullOrEmpty(si.EnvironmentVariables["Path"]));
-
-            Tracer.TraceInformation("powershell-environment: temp='{0}', tmp='{1}', userprofile='{2}', homedrive='{3}', homepath='{4}'",
-                si.EnvironmentVariables["TEMP"], si.EnvironmentVariables["TMP"],
-                si.EnvironmentVariables["USERPROFILE"], si.EnvironmentVariables["HOMEDRIVE"], si.EnvironmentVariables["HOMEPATH"]);
+            Tracer.TraceInformation($"powershell-executable: '{si.FileName}', working-directory: {si.WorkingDirectory}, args: {si.Arguments}");
 
             pspi.Process.Exited += (s, e) =>
             {
-                try { Tracer.TraceError("pwsh exited. HasExited={0}, ExitCode={1:X8}", pspi.Process.HasExited, pspi.Process.ExitCode); }
+                try { Tracer.TraceInformation($"powershell-exited. hasexited={pspi.Process.HasExited}, exitcode={pspi.Process.ExitCode:X8}, totaltime={pspi.Process.TotalProcessorTime}"); }
                 catch { }
             };
 
             var runspace = RunspaceFactory.CreateOutOfProcessRunspace(new TypeTable(new string[0]), pspi);
-
             try
             {
                 runspace.Open();
@@ -92,9 +74,7 @@ namespace Granfeldt
             {
                 bool hasExited = false; int exitCode = 0;
                 try { hasExited = pspi.Process.HasExited; exitCode = pspi.Process.ExitCode; } catch { }
-
-                Tracer.TraceError("powershell-runspace-open failed. hasexited={0}, exitcode=0x{1:X8}", hasExited, exitCode);
-                Tracer.TraceError("exception: {0}", ex);
+                Tracer.TraceError($"powershell-runspace-open failed. hasexited={hasExited}, exitcode=0x{exitCode:X8}, exception: {ex}");
                 throw;
             }
         }
