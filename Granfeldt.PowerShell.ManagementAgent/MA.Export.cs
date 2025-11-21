@@ -24,10 +24,8 @@ namespace Granfeldt
             Tracer.Enter("openexportconnection");
             try
             {
-                InitializeConfigParameters(configParameters);
-
                 InitializeSchemaVariables(types);
-
+                InitializeConfigParameters(configParameters);
                 EnsurePowerShellEngine();
 
                 exportType = exportRunStep.ExportType;
