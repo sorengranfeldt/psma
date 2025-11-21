@@ -173,6 +173,7 @@ namespace Granfeldt
                     }
                 }
                 schemaResults.Clear();
+                engine.Dispose();
                 return schema;
             }
             catch (Exception ex)
