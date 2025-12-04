@@ -5,15 +5,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 using System.Text.RegularExpressions;
 
 namespace Granfeldt
 {
     public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
     {
-        Collection<PSObject> schemaResults;
-
         class AttributeDefinition
         {
             public string Name { get; set; }
@@ -40,16 +37,18 @@ namespace Granfeldt
             try
             {
                 Schema schema = Schema.Create();
-                InitializeConfigParameters(configParameters);
 
-                // Validate schema script path is configured
+                InitializeConfigParameters(configParameters);
+                EnsurePowerShellEngine();
+
+                // validate schema script path is configured
                 if (string.IsNullOrEmpty(schemaScriptPath))
                 {
                     Tracer.TraceError("schema-script-path-not-configured");
                     throw new InvalidOperationException("Schema script path is not configured. Please configure the 'Schema Script' parameter in the management agent configuration.");
                 }
 
-                // Validate schema script file exists
+                // validate schema script file exists
                 if (!File.Exists(schemaScriptPath))
                 {
                     Tracer.TraceError("schema-script-file-not-found: {0}", schemaScriptPath);
@@ -57,21 +56,8 @@ namespace Granfeldt
                 }
 
                 Tracer.TraceInformation("using-schema-script: {0}", schemaScriptPath);
-                OpenRunspace();
-                Command cmd = new Command(Path.GetFullPath(schemaScriptPath));
-                cmd.Parameters.Add(new CommandParameter("Username", Username));
-                cmd.Parameters.Add(new CommandParameter("Password", Password));
-                cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
 
-                cmd.Parameters.Add(new CommandParameter("AuxUsername", UsernameAux));
-                cmd.Parameters.Add(new CommandParameter("AuxPassword", PasswordAux));
-                cmd.Parameters.Add(new CommandParameter("AuxCredentials", GetSecureCredentials(UsernameAux, SecureStringPasswordAux)));
-
-                cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
-
-                // Schema operations should always use Windows PowerShell 5.1 for backwards compatibility
-                schemaResults = InvokePowerShellScript(cmd, null, allowPowerShell7: false);
-                CloseRunspace();
+                Collection<PSObject> schemaResults = engine.InvokeCommand(Path.GetFullPath(schemaScriptPath), GetDefaultScriptParameters(), null);
 
                 if (schemaResults == null)
                 {
@@ -98,6 +84,15 @@ namespace Granfeldt
                             string[] elements = p.Name.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
                             string attrName = elements[0].Trim();
                             string attrType = elements[1].Trim();
+
+                            if (elements.Length < 2)
+                            {
+                                Tracer.TraceError("invalid-schema-property-name-format: '{0}'", p.Name ?? "(null)");
+                                throw new InvalidOperationException(
+                                    "Schema script returned a property with invalid name format. " +
+                                    "Expected 'name|type', e.g. 'accountName|string' or 'anchor-id|string'. " +
+                                    "Offending property name: '" + (p.Name ?? "(null)") + "'.");
+                            }
 
                             if (string.Equals(attrName, Constants.ControlValues.ObjectClass, StringComparison.OrdinalIgnoreCase))
                             {
@@ -178,6 +173,7 @@ namespace Granfeldt
                     }
                 }
                 schemaResults.Clear();
+                engine.Dispose();
                 return schema;
             }
             catch (Exception ex)
