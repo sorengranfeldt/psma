@@ -1,16 +1,10 @@
-﻿// june 28, 2018, soren granfeldt
-//  - removed error message for 'paged-import-not-supported'
-// july 5, 2018, soren granfeldt
-//  - added
-
-using Microsoft.MetadirectoryServices;
+﻿using Microsoft.MetadirectoryServices;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 using System.Text.RegularExpressions;
 
 namespace Granfeldt
@@ -35,13 +29,13 @@ namespace Granfeldt
         Schema schema;
         PSObject schemaPSObject;
 
-        public PSObject InitializeSchemaVariables(Schema Schema)
+        public void InitializeSchemaVariables(Schema Schema)
         {
-            if (Schema == null) return null;
+            if (Schema == null) return;
             schema = Schema;
 
-			schemaPSObject = new PSObject();
-			foreach (SchemaType type in schema.Types)
+            schemaPSObject = new PSObject();
+            foreach (SchemaType type in schema.Types)
             {
                 PSObject typeObj = new PSObject();
                 typeObj.Members.Add(new PSNoteProperty("ObjectType", type.Name));
@@ -65,7 +59,6 @@ namespace Granfeldt
                 // add to general schema object
                 schemaPSObject.Members.Add(new PSNoteProperty(type.Name, typeObj));
             }
-            return null;
         }
 
         public OpenImportConnectionResults OpenImportConnection(System.Collections.ObjectModel.KeyedCollection<string, ConfigParameter> configParameters, Schema types, OpenImportConnectionRunStep openImportRunStep)
@@ -80,12 +73,7 @@ namespace Granfeldt
                     {
                         foreach (SchemaAttribute attr in type.AnchorAttributes)
                         {
-                            //Tracer.TraceInformation("{0}-anchor-attribute {1} [{2}]", type.Name, attr.Name, attr.DataType);
                             objectTypeAnchorAttributeNames.Add(type.Name, attr.Name);
-                        }
-                        foreach (SchemaAttribute attr in type.Attributes)
-                        {
-                            //Tracer.TraceInformation("{0}-attribute {1} [{2}]", type.Name, attr.Name, attr.DataType);
                         }
                     }
                     InitializeSchemaVariables(types);
@@ -100,10 +88,7 @@ namespace Granfeldt
                 }
 
                 InitializeConfigParameters(configParameters);
-
-                //SetupImpersonationToken();
-
-                OpenRunspace();
+                EnsurePowerShellEngine();
 
                 Tracer.TraceInformation("resetting-pipeline-results-and-counters");
                 importResults = new List<PSObject>();
@@ -151,32 +136,23 @@ namespace Granfeldt
                     // on first call, we set customdata to value from last successful run
                     returnedCustomData = importRunStep.CustomData;
 
-                    Command cmd = new Command(Path.GetFullPath(importScriptPath));
-                    cmd.Parameters.Add(new CommandParameter("Username", Username));
-                    cmd.Parameters.Add(new CommandParameter("Password", Password));
-                    cmd.Parameters.Add(new CommandParameter("Credentials", GetSecureCredentials(Username, SecureStringPassword)));
+                    Dictionary<string, object> parameters = GetDefaultScriptParameters();
+                    parameters.Add("OperationType", importOperationType.ToString());
+                    parameters.Add("UsePagedImport", usePagedImport);
+                    parameters.Add("PageSize", ImportRunStepPageSize);
+                    parameters.Add("ImportPageNumber", ImportPageNumber);
+                    parameters.Add("Schema", schemaPSObject);
 
-                    cmd.Parameters.Add(new CommandParameter("AuxUsername", UsernameAux));
-                    cmd.Parameters.Add(new CommandParameter("AuxPassword", PasswordAux));
-                    cmd.Parameters.Add(new CommandParameter("AuxCredentials", GetSecureCredentials(UsernameAux, SecureStringPasswordAux)));
-
-                    cmd.Parameters.Add(new CommandParameter("ConfigurationParameter", ConfigurationParameter));
-
-                    cmd.Parameters.Add(new CommandParameter("OperationType", importOperationType.ToString()));
-                    cmd.Parameters.Add(new CommandParameter("UsePagedImport", usePagedImport));
-                    cmd.Parameters.Add(new CommandParameter("PageSize", ImportRunStepPageSize));
-                    cmd.Parameters.Add(new CommandParameter("ImportPageNumber", ImportPageNumber));
-                    cmd.Parameters.Add(new CommandParameter("Schema", schemaPSObject));
 
                     Tracer.TraceInformation("setting-custom-data '{0}'", importRunStep.CustomData);
-                    SetPowerShellVariable("RunStepCustomData", importRunStep.CustomData);
+                    engine.SetVariable("RunStepCustomData", importRunStep.CustomData);
                     Tracer.TraceInformation("setting-page-token '{0}'", pageToken);
-                    SetPowerShellVariable("PageToken", pageToken);
+                    engine.SetVariable("PageToken", pageToken);
 
-                    importResults = InvokePowerShellScript(cmd, null).ToList<PSObject>();
+                    importResults = engine.InvokeCommand(Path.GetFullPath(importScriptPath), parameters, null).ToList();
 
-                    returnedCustomData = GetPowerShellVariable("RunStepCustomData");
-                    pageToken = GetPowerShellVariable("PageToken");
+                    returnedCustomData = engine.GetVariable("RunStepCustomData");
+                    pageToken = engine.GetVariable("PageToken");
 
                     Tracer.TraceInformation("page-token-returned '{0}'", pageToken == null ? "(null)" : pageToken);
                     Tracer.TraceInformation("custom-data returned '{0}'", returnedCustomData);
@@ -184,7 +160,7 @@ namespace Granfeldt
 
                     if (usePagedImport)
                     {
-                        object moreToImportObject = GetPowerShellVariable("MoreToImport");
+                        object moreToImportObject = engine.GetVariable("MoreToImport");
                         if (moreToImportObject == null)
                         {
                             Tracer.TraceError("For paged imports, the global variable 'MoreToImport' must be set to 'true' or 'false'");
@@ -490,7 +466,7 @@ namespace Granfeldt
             catch (Exception ex)
             {
                 Tracer.TraceError("getimportentries", ex);
-                throw;
+                throw new TerminateRunException(ex.Message);
             }
             finally
             {
@@ -502,19 +478,6 @@ namespace Granfeldt
             Tracer.Enter("closeimportconnectionresults");
             try
             {
-                try
-                {
-                    CloseRunspace();
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore runspace cleanup
-                }
-                catch (Exception ex)
-                {
-                    Tracer.TraceWarning("closeimport-runspace-cleanup-error", 1, ex.Message);
-                }
-
                 CloseImportConnectionResults cicr = new CloseImportConnectionResults();
                 Tracer.TraceInformation("custom-data {0}", importRunStep.CustomData);
                 Tracer.TraceInformation("close-reason {0}", importRunStep.Reason);
@@ -522,20 +485,7 @@ namespace Granfeldt
                 {
                     cicr.CustomData = importRunStep.CustomData;
                 }
-                
-                try
-                {
-                    Dispose();
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // AppDomain is unloading, ignore disposal
-                }
-                catch (Exception ex)
-                {
-                    Tracer.TraceWarning("closeimport-dispose-error", 1, ex.Message);
-                }
-                
+                Dispose();
                 return cicr;
             }
             catch (AppDomainUnloadedException)
