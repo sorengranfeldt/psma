@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Management.Automation;
@@ -86,6 +87,7 @@ namespace Granfeldt
                     }
 
                     ThrowIfHadErrors(ps);
+                    UnwrapPSObjectsInResults(result);
                     return result;
                 }
                 catch (Exception ex)
@@ -93,6 +95,74 @@ namespace Granfeldt
                     throw new RuntimeException("Error during PowerShell invocation: " + ex.Message, ex);
                 }
             }
+        }
+
+        // OOP runspaces deliver values through PSRP, which wraps array/collection elements
+        // (and dictionary values that are reference types) in PSObject. The MA.Import path
+        // reads pipeline objects whose BaseObject is a Hashtable and feeds those values
+        // straight to the sync engine — which throws "unable to cast PSObject to System.String"
+        // for a String[] attribute when the array elements are PSObject wrappers. Unwrap once
+        // here so callers see plain .NET values regardless of transport.
+        private static void UnwrapPSObjectsInResults(Collection<PSObject> results)
+        {
+            if (results == null) return;
+            foreach (var pso in results)
+            {
+                if (pso?.BaseObject is Hashtable ht)
+                {
+                    UnwrapHashtableValues(ht);
+                }
+            }
+        }
+
+        private static void UnwrapHashtableValues(Hashtable ht)
+        {
+            var keys = new ArrayList(ht.Keys);
+            foreach (var k in keys)
+            {
+                ht[k] = UnwrapValue(ht[k]);
+            }
+        }
+
+        private static object UnwrapValue(object value)
+        {
+            if (value == null) return null;
+
+            if (value is PSObject pso)
+            {
+                return UnwrapValue(pso.BaseObject);
+            }
+
+            // Treat strings as scalars (they are IEnumerable<char>).
+            if (value is string) return value;
+
+            // Nested dictionaries / hashtables: recurse into values, preserve container.
+            if (value is IDictionary dict)
+            {
+                var keys = new ArrayList(dict.Keys);
+                foreach (var k in keys)
+                {
+                    dict[k] = UnwrapValue(dict[k]);
+                }
+                return dict;
+            }
+
+            // Byte arrays are commonly used for binary attributes — preserve as-is.
+            if (value is byte[]) return value;
+
+            // Any other enumerable (PSObject[], object[], List<PSObject>, etc.):
+            // materialise to object[] with each element unwrapped.
+            if (value is IEnumerable enumerable)
+            {
+                var list = new List<object>();
+                foreach (var item in enumerable)
+                {
+                    list.Add(UnwrapValue(item));
+                }
+                return list.ToArray();
+            }
+
+            return value;
         }
 
         private PowerShell CreatePsWithStreams()
