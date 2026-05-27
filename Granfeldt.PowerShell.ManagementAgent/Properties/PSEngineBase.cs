@@ -15,6 +15,10 @@ namespace Granfeldt
         protected PowerShellProcessInstance _psProc;
         private bool _started;
 
+        // Read by PSEngine's Process.Exited guard to short-circuit logging
+        // once teardown has begun. Set via Interlocked in Dispose(bool).
+        protected internal int _disposed;
+
         public event Action<string> Warning;
         public event Action<ErrorRecord> Error;
         public event Action<string> Verbose;
@@ -86,7 +90,12 @@ namespace Granfeldt
                         result = ps.Invoke(input);
                     }
 
-                    ThrowIfHadErrors(ps);
+                    // Do NOT terminate the run on non-terminating errors in ps.Streams.Error.
+                    // Terminating errors (parse failures, `throw`, etc.) are already raised by ps.Invoke()
+                    // and caught by the surrounding try/catch. Non-terminating errors (Write-Error,
+                    // cmdlet non-terminating errors, parameter binding warnings) are logged via the
+                    // Error event handler (see PSEngine.cs) and must not discard pipeline output —
+                    // doing so loses every object the import script produced.
                     UnwrapPSObjectsInResults(result);
                     return result;
                 }
@@ -128,13 +137,29 @@ namespace Granfeldt
         {
             if (value == null) return null;
 
+            // Treat strings as scalars (they are IEnumerable<char>) before the enumerable branch.
+            if (value is string) return value;
+
+            // PSObject wrapper: a PSCustomObject base (or self-referencing PSObject) carries
+            // its data on the PSObject's Properties collection and is NOT [Serializable].
+            // BinaryFormatter (used by ECMA2Host across its AppDomain boundary) will throw
+            // SerializationException on it. Flatten such cases into a managed Hashtable.
+            // Everything else can be unwrapped by recursing on BaseObject.
             if (value is PSObject pso)
             {
+                if (pso.BaseObject is PSCustomObject || ReferenceEquals(pso.BaseObject, pso))
+                {
+                    return FlattenPSObjectProperties(pso);
+                }
                 return UnwrapValue(pso.BaseObject);
             }
 
-            // Treat strings as scalars (they are IEnumerable<char>).
-            if (value is string) return value;
+            // Bare PSCustomObject (no enclosing PSObject) — defensive. Properties live on
+            // the wrapping PSObject, so wrap-and-flatten.
+            if (value is PSCustomObject)
+            {
+                return FlattenPSObjectProperties(new PSObject(value));
+            }
 
             // Nested dictionaries / hashtables: recurse into values, preserve container.
             if (value is IDictionary dict)
@@ -165,6 +190,31 @@ namespace Granfeldt
             return value;
         }
 
+        // Convert a PSObject (whose BaseObject is a PSCustomObject, or which has only
+        // PowerShell-side note properties) into a serializable Hashtable. Recurses so
+        // nested PSCustomObjects also flatten. This is what stops the
+        // SerializationException ECMA2Host throws when marshalling import results
+        // across its AppDomain via BinaryFormatter (PSCustomObject is not [Serializable]).
+        private static Hashtable FlattenPSObjectProperties(PSObject pso)
+        {
+            var ht = new Hashtable();
+            if (pso?.Properties == null) return ht;
+
+            foreach (var prop in pso.Properties)
+            {
+                try
+                {
+                    ht[prop.Name] = UnwrapValue(prop.Value);
+                }
+                catch
+                {
+                    // Skip properties that throw on access (rare; deserialized PSObject
+                    // property getters can fail for partially-resolved types).
+                }
+            }
+            return ht;
+        }
+
         private PowerShell CreatePsWithStreams()
         {
             try
@@ -186,12 +236,6 @@ namespace Granfeldt
             }
         }
 
-        private static void ThrowIfHadErrors(PowerShell ps, bool ignoreIfStopped = false)
-        {
-            if (ignoreIfStopped && ps.HadErrors) return;
-            if (ps.HadErrors) throw new Microsoft.MetadirectoryServices.TerminateRunException(ps.Streams.Error.First().ToString());
-        }
-
         public void Dispose()
         {
             Dispose(true);
@@ -201,19 +245,51 @@ namespace Granfeldt
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
+            if (System.Threading.Interlocked.Exchange(ref _disposed, 1) != 0) return;
 
+            // 1. Stop receiving stream events so handlers don't race against teardown
+            //    or hold AppDomain-rooted references during unload.
+            Warning = null;
+            Error = null;
+            Verbose = null;
+            Progress = null;
+            Debug = null;
+
+            // 2. Kill the child pwsh.exe FIRST. Closing the child closes its stdout
+            //    pipe, which unblocks the PSRP OutOfProcessClientSessionTransportManager
+            //    reader thread that is otherwise stuck in unmanaged ReadFile and cannot
+            //    be aborted by AppDomain.Unload() (this is what surfaces in ECMA2Host
+            //    as CannotUnloadAppDomainException / HRESULT 0x80131015).
+            System.Diagnostics.Process child = null;
+            try { child = _psProc?.Process; } catch { }
+
+            if (child != null)
+            {
+                try { if (!child.HasExited) child.Kill(); } catch { }
+                try { child.WaitForExit(5000); } catch { }
+            }
+
+            // 3. NOW dispose the runspace. With the child dead the graceful-close
+            //    path short-circuits instead of blocking on a PSRP ack that will
+            //    never arrive; the SDK's internal reader-thread join completes
+            //    immediately because the pipe is at EOF.
             try { _runspace?.Dispose(); } catch { }
+            _runspace = null;
 
+            // 4. Dispose the process wrapper.
+            try { _psProc?.Dispose(); } catch { }
+            _psProc = null;
+
+            // 5. Drain pending finalizers on the disposing thread so nothing from
+            //    this engine is still awaiting collection when ECMA2Host attempts
+            //    AppDomain.Unload().
             try
             {
-                if (_psProc?.Process != null && !_psProc.Process.HasExited)
-                    _psProc.Process.Kill();
+                System.GC.Collect();
+                System.GC.WaitForPendingFinalizers();
+                System.GC.Collect();
             }
             catch { }
-            finally
-            {
-                try { _psProc?.Dispose(); } catch { }
-            }
         }
     }
 
