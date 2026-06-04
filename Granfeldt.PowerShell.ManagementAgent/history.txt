@@ -102,4 +102,27 @@
 // january 3, 2022 | Benoit Boudeville
 //	- added ImportOnly/ExportOnly specifiers for schema attributes
 //	- upped to 5.6.4.2022
+// june 2, 2026 | Darren J Robinson
+//	- ECMA2Host fixes for the out-of-process PowerShell engine
+//	    - PSEngineBase.UnwrapValue now flattens PSCustomObject (and self-referencing
+//	      PSObject) into Hashtable so import results survive ECMA2Host's
+//	      BinaryFormatter AppDomain marshalling (fixes "Type PSCustomObject is not
+//	      marked as serializable" on Full Import)
+//	    - PSEngineBase.Dispose now nulls event handlers, kills the child pwsh.exe
+//	      before disposing the runspace, then drains finalizers - the previous order
+//	      left the PSRP reader thread blocked in unmanaged ReadFile and caused
+//	      CannotUnloadAppDomainException (HRESULT 0x80131015) on AppDomain unload
+//	    - PSEngine.Process.Exited handler short-circuits once Dispose has begun
+//	      (via shared _disposed flag) so it cannot log after AppDomain unload
+//	    - removed ThrowIfHadErrors that was terminating runs on non-terminating
+//	      errors and discarding all pipeline output
+//	- spawn / dispose performance tweaks
+//	    - POWERSHELL_TELEMETRY_OPTOUT and POWERSHELL_UPDATECHECK=Off env vars set on
+//	      pwsh 7 child so it skips startup telemetry and update check
+//	- new Global parameter "Use Windows PowerShell 5.1 for Export" (default off);
+//	  lets a connector keep its default at PowerShell 7 (for import) while running
+//	  exports on Windows PowerShell 5.1 (~1-2s/cycle saving on ECMA2Host where pwsh
+//	  is spawned per operation)
+//	- upped version to 6.1.0604.2026
+// 
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
