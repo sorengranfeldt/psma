@@ -500,6 +500,39 @@
             </text>
             <default-value>1</default-value>
           </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>divider</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>
+            </name>
+            <use>global</use>
+            <type>label</type>
+            <validation>
+            </validation>
+            <text>If the connector's PowerShell Version is set to PowerShell 7 (typically for parallel import features) but the export script doesn't need PS7-specific features, ticking this runs the export under Windows PowerShell 5.1 instead - eliminating pwsh.exe CLR cold start, runspace setup and module discovery on every event. Measured 1.3x to 3.5x faster end-to-end per account on ECMA2Host (~2 to ~11 seconds saved per export cycle), depending on the connector's per-account workload. Larger savings for lightweight per-account API calls; smaller for heavy I/O or multi-step lookup workflows. Import / schema / password continue to use the connector's selected PowerShell Version.</text>
+            <default-value>
+            </default-value>
+          </parameter>
+          <parameter>
+            <name>Use Windows PowerShell 5.1 for Export</name>
+            <use>global</use>
+            <type>checkbox</type>
+            <validation>
+            </validation>
+            <text>
+            </text>
+            <default-value>0</default-value>
+          </parameter>
         </parameter-definitions>
         <parameter-values>
         </parameter-values>

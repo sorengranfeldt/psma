@@ -33,6 +33,8 @@ namespace Granfeldt
 
             public const string PowerShellVersion = "PowerShell Version";
             public const string PowerShell7ExecutablePath = "PowerShell 7 Executable Path";
+
+            public const string ExportUseWindowsPowerShell51 = "Use Windows PowerShell 5.1 for Export";
         }
         public static class ControlValues
         {
@@ -82,17 +84,23 @@ namespace Granfeldt
         // script execution options
         bool usePagedImport = false;
         bool exportSimpleObjects = true;
+        bool exportUseWindowsPowerShell51 = false;
 
         PowerShellEngineVersion SelectedPowerShellEngine = PowerShellEngineVersion.WindowsPowerShell51;
         IPSEngine engine = default;
 
         string PowerShell7ExecutablePath = @"C:\Program Files\PowerShell\7\pwsh.exe"; // Default PowerShell 7 path
 
-        void EnsurePowerShellEngine()
+        // overrideVersion lets per-operation callers (currently only Export) choose a
+        // different engine than the connector's default `SelectedPowerShellEngine`. WinPS 5.1
+        // starts ~1-2 seconds faster than pwsh 7 because it runs in-process, which matters
+        // on ECMA2Host where a new pwsh.exe is spawned for every operation.
+        void EnsurePowerShellEngine(PowerShellEngineVersion? overrideVersion = null)
         {
+            var versionToUse = overrideVersion ?? SelectedPowerShellEngine;
             if (engine == null)
             {
-                engine = new PSEngine(PowerShell7ExecutablePath, SelectedPowerShellEngine);
+                engine = new PSEngine(PowerShell7ExecutablePath, versionToUse);
             }
             engine.SetImpersonation(impersonationUserDomain, impersonationUsername, impersonationUserPassword);
             engine.Start();
