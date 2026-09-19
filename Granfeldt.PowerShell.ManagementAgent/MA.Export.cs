@@ -26,7 +26,13 @@ namespace Granfeldt
             {
                 InitializeSchemaVariables(types);
                 InitializeConfigParameters(configParameters);
-                EnsurePowerShellEngine();
+
+                // Honour the Global-page "Use Windows PowerShell 5.1 for Export" override:
+                // when ticked, export runs on WinPS 5.1 even if the connector default is PS7.
+                PowerShellEngineVersion? exportOverride = exportUseWindowsPowerShell51
+                    ? PowerShellEngineVersion.WindowsPowerShell51
+                    : (PowerShellEngineVersion?)null;
+                EnsurePowerShellEngine(exportOverride);
 
                 exportType = exportRunStep.ExportType;
                 Tracer.TraceInformation("export-type '{0}'", exportType);

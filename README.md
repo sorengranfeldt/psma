@@ -9,6 +9,21 @@ The PSMA now supports **both Windows PowerShell 5.1 and PowerShell 7.5+** throug
 
 [Read about PS7 support](https://github.com/sorengranfeldt/psma/wiki/PS7--Support)
 
+### Use Windows PowerShell 5.1 for Export (per-connector override)
+
+A new Global-Parameters checkbox **Use Windows PowerShell 5.1 for Export** lets a connector keep its default `PowerShell Version` at PowerShell 7 (typically chosen because the import script uses PS7 features like `ForEach-Object -Parallel`) while running its **export** operations on Windows PowerShell 5.1.
+
+Off by default. When ticked:
+
+- Export operations spawn the in-host Windows PowerShell 5.1 engine instead of `pwsh.exe`.
+- Import, schema and password operations continue to use the connector's selected `PowerShell Version`.
+- Substantially reduces per-event wall-clock time when running under the Microsoft Entra provisioning agent's ECMA Connector Host (Microsoft ECMA2Host service), where a fresh child process is spawned for every export and `pwsh.exe` pays full CLR cold start, runspace setup, and module discovery on each invocation. **Measured across five production connectors: 1.3× to 3.5× faster end-to-end per account, saving roughly 2 to 11 seconds per export cycle** depending on the connector's per-account workload. The largest savings are seen on connectors whose per-account work is a single lightweight API call (SOAP, REST, REST w/per-event AuthN — where almost all the PowerShell 7 time was startup overhead, not real work). Smaller but consistent savings on connectors with heavier per-account work (multi-step lookup chains, SMB file I/O), since the engine swap can only eliminate the startup overhead — actual API and I/O work remains the same.
+- Less impactful for FIM/MIM Synchronization Service runs, where the engine starts once per run step rather than once per event.
+
+Recommended when:
+- The connector's import script needs PowerShell 7 (parallel features, modern cmdlets) **and**
+- The connector's export script uses no PS7-only language features (`??` null-coalescing, ternary `?:`, `ForEach-Object -Parallel`, etc.) — verify before enabling.
+
 The management agent supports
 * [Full and Delta Import](https://github.com/sorengranfeldt/psma/wiki/Import)
 * [Export and Full Export](https://github.com/sorengranfeldt/psma/wiki/Export)
