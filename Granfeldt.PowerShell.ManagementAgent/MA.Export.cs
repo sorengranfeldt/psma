@@ -6,7 +6,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Text.RegularExpressions;
 
 namespace Granfeldt
 {
@@ -65,6 +64,8 @@ namespace Granfeldt
                 parameters.Add("Schema", schemaPSObject);
                 parameters.Add("ExportPageNumber", ExportPageNumber);
 
+                Dictionary<string, List<string>> attributeNamesByObjectType = new Dictionary<string, List<string>>();
+
                 foreach (CSEntryChange csentryChange in csentries)
                 {
                     Tracer.TraceInformation("adding-object id: {0}, dn: '{1}' [{2}]", csentryChange.Identifier, csentryChange.DN, csentryChange.ObjectModificationType);
@@ -78,7 +79,11 @@ namespace Granfeldt
                         obj.Properties.Add(new PSNoteProperty(Constants.ControlValues.ObjectModificationType, csentryChange.ObjectModificationType.ToString()));
                         obj.Properties.Add(new PSNoteProperty(Constants.ControlValues.ObjectType, csentryChange.ObjectType));
 
-                        List<string> attrs = schema.Types[csentryChange.ObjectType].Attributes.Select(a => a.Name).ToList<string>();
+                        if (!attributeNamesByObjectType.TryGetValue(csentryChange.ObjectType, out List<string> attrs))
+                        {
+                            attrs = schema.Types[csentryChange.ObjectType].Attributes.Select(a => a.Name).ToList();
+                            attributeNamesByObjectType[csentryChange.ObjectType] = attrs;
+                        }
                         obj.Properties.Add(new PSNoteProperty(Constants.ControlValues.AttributeNames, attrs));
 
                         obj.Properties.Add(new PSNoteProperty(Constants.ControlValues.ChangedAttributeNames, csentryChange.ChangedAttributeNames == null ? new List<string>() : csentryChange.ChangedAttributeNames));
@@ -154,7 +159,7 @@ namespace Granfeldt
                                 Tracer.TraceInformation("got-errordetail {0}, {1}", ErrorDetail, key);
                                 continue;
                             }
-                            if (!(Regex.IsMatch(key, @"^\[.+\]$", RegexOptions.IgnoreCase)))
+                            if (!(key.Length >= 2 && key[0] == '[' && key[key.Length - 1] == ']'))
                             {
                                 Tracer.TraceInformation("got-attribute-change {0}: '{1}'", key, hashTable[key]);
                                 attrchanges.Add(AttributeChange.CreateAttributeAdd(key, hashTable[key]));

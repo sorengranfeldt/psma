@@ -5,13 +5,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Text.RegularExpressions;
 
 namespace Granfeldt
 {
     public partial class PowerShellManagementAgent : IDisposable, IMAExtensible2GetCapabilities, IMAExtensible2GetSchema, IMAExtensible2GetParameters, IMAExtensible2CallImport, IMAExtensible2CallExport, IMAExtensible2Password
     {
         Hashtable objectTypeAnchorAttributeNames = new Hashtable();
+
+        static readonly HashSet<string> controlValueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            Constants.ControlValues.ObjectClass,
+            Constants.ControlValues.ObjectClassEx,
+            Constants.ControlValues.ChangeType,
+            Constants.ControlValues.ChangeTypeEx,
+            Constants.ControlValues.DN,
+            Constants.ControlValues.ErrorName,
+            Constants.ControlValues.ErrorDetail,
+        };
+        static bool IsControlValueKey(string key) => controlValueKeys.Contains(key);
 
         OperationType importOperationType;
         int ImportRunStepPageSize;
@@ -202,8 +213,6 @@ namespace Granfeldt
                     Tracer.TraceInformation("converting-objects-to-csentrychange {0:n0}", importResultsBatch.Count);
                     foreach (PSObject obj in importResultsBatch)
                     {
-                        HashSet<AttributeDefinition> attrs = new HashSet<AttributeDefinition>();
-
                         Tracer.TraceInformation("start-connector-space-object");
                         try
                         {
@@ -374,7 +383,7 @@ namespace Granfeldt
                             {
                                 try
                                 {
-                                    if (Regex.IsMatch(key, string.Format(@"^(objectClass|\[objectclass\]|changeType|\[changetype\]|\[DN\]|\[ErrorName\]|\[ErrorDetail\]|{0})$", AnchorAttributeName), RegexOptions.Compiled | RegexOptions.IgnoreCase))
+                                    if (IsControlValueKey(key) || key.Equals(AnchorAttributeName, StringComparison.OrdinalIgnoreCase))
                                     {
                                         Tracer.TraceInformation("skip-control-value {0}", key);
                                         continue;
