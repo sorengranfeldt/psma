@@ -98,6 +98,7 @@
     <Compile Include="PSEngine\IPSEngine.cs" />
     <Compile Include="PSEngine\PSEngine.cs" />
     <Compile Include="PSEngine\PSEngineBase.cs" />
+    <Compile Include="PSEngine\SmaStaticCleanup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tracer.cs" />
   </ItemGroup>

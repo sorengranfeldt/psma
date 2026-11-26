@@ -299,6 +299,21 @@ namespace Granfeldt
                 System.GC.Collect();
             }
             catch { }
+
+            // 6. Free the WinPS 5.1 ETW provider registration (PSEtwLogProvider.etwProvider)
+            //    that the host leaks once per AppDomain and that otherwise exhausts the
+            //    1024-provider-per-process ETW limit, after which EtwRegister fails with
+            //    "Not enough memory resources are available" and ALL runspace creation fails.
+            //    Done here on the deterministic close path, before ECMA2Host unloads the domain,
+            //    so the registration is freed even if that unload later fails
+            //    (CannotUnloadAppDomainException / 0x80131015). This is a quick EventUnregister on
+            //    the close thread and does NO work in the unload window itself: an earlier revision
+            //    also ran an AppDomain.DomainUnload backstop and an AMSI uninitialize, but that
+            //    native work during unload tipped large imports into 0x80131015, so it was removed
+            //    (see SmaStaticCleanup). Covers every engine permutation because the leaking
+            //    client-side type is always the in-box WinPS 5.1 one, whatever engine hosts the
+            //    runspace server.
+            SmaStaticCleanup.ReleaseAll();
         }
     }
 

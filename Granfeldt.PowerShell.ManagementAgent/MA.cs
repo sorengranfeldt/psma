@@ -133,6 +133,18 @@ namespace Granfeldt
             return new PSCredential(username, secureStringPassword);
         }
 
+        static void TraceHandleCount(string phase)
+        {
+            try
+            {
+                using (var proc = System.Diagnostics.Process.GetCurrentProcess())
+                {
+                    Tracer.TraceInformation("handle-count phase={0} handles={1}", phase, proc.HandleCount);
+                }
+            }
+            catch { }
+        }
+
         public PowerShellManagementAgent()
         {
             Tracer.Enter("initialize");
@@ -172,6 +184,8 @@ namespace Granfeldt
                         Tracer.TraceWarning("Logging to file is no longer supported. Please remove registrykey DebugLogFileName and use DebugView or similar instead to catch traces from this Management Agent");
                     }
                 }
+
+                TraceHandleCount("initialize-end");
             }
             catch (Exception ex)
             {
@@ -243,6 +257,7 @@ namespace Granfeldt
             }
             finally
             {
+                TraceHandleCount("dispose-end");
                 Tracer.Exit("dispose");
             }
         }

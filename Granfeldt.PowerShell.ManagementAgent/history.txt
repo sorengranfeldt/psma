@@ -124,5 +124,29 @@
 //	  exports on Windows PowerShell 5.1 (~1-2s/cycle saving on ECMA2Host where pwsh
 //	  is spawned per operation)
 //	- upped version to 6.1.0604.2026
-// 
+// november 12, 2026 | Darren J Robinson
+//	- fixed connector-wide import/export failures caused by ETW provider-registration
+//	  exhaustion in the ECMA2Host host process
+//	    - opening the out-of-process runspace forces the Windows PowerShell 5.1 PSEtwLog type
+//	      initializer, which registers an ETW provider (EventProvider.EtwRegister) once per
+//	      AppDomain and holds it in the private static PSEtwLogProvider.etwProvider. That
+//	      registration is released only by the EventProvider finalizer on a clean AppDomain
+//	      unload; ECMA2Host runs each operation in a short-lived AppDomain and when an unload
+//	      fails (CannotUnloadAppDomainException / HRESULT 0x80131015) it leaks. Windows caps ETW
+//	      provider registrations at 1024 per process, after which EtwRegister fails with "Not
+//	      enough memory resources are available to complete this operation", failing PSEtwLog's
+//	      static constructor, RemoteRunspace..ctor and therefore every import/export across all
+//	      connectors
+//	    - new SmaStaticCleanup disposes PSEtwLogProvider.etwProvider (EventUnregister) by
+//	      reflection; PSEngineBase.Dispose calls it on the deterministic close path, before
+//	      ECMA2Host unloads the domain, so the registration is freed even if that unload later
+//	      fails. Done on the close path (not in an AppDomain.DomainUnload handler) so no native
+//	      cleanup runs during the unload window
+//	    - applies to all engine permutations (PS7-only, WinPS 5.1-only, and mixed PS7 import /
+//	      WinPS 5.1 export) because the leaking client-side types are always the in-box WinPS 5.1
+//	      ones loaded in the .NET Framework host, regardless of which child process hosts the
+//	      runspace server
+//	    - added per-operation handle-count tracing to the MA constructor and Dispose
+//	- upped version to 6.1.1112.2026
+//
 // Information on assembly version numbers - http://support.microsoft.com/kb/556041
